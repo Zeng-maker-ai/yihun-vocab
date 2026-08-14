@@ -1,0 +1,1420 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>易混词汇查词</title>
+<style>
+:root {
+  --bg: #f4f6f8;
+  --surface: #ffffff;
+  --border: #dfe4ea;
+  --ink: #1c2733;
+  --muted: #5b6b7b;
+  --primary: #0f766e;
+  --primary-weak: #e6f4f3;
+  --accent: #b45309;
+  --danger: #be123c;
+  --radius: 8px;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: "Segoe UI", "Microsoft YaHei", "PingFang SC", "Noto Sans SC", sans-serif;
+  font-size: 15px;
+  line-height: 1.55;
+}
+button { font: inherit; color: inherit; cursor: pointer; }
+input, textarea, select { font: inherit; color: inherit; }
+.wrap { max-width: 980px; margin: 0 auto; padding: 0 20px; }
+
+.topbar {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+.topbar-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding-top: 18px;
+  padding-bottom: 14px;
+}
+.brand-name {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+.brand-sub {
+  color: var(--muted);
+  font-size: 13px;
+  margin-top: 2px;
+}
+.stats {
+  font-size: 13px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.stats b { color: var(--ink); }
+
+.tabs {
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid var(--border);
+  margin-top: 16px;
+}
+.tab {
+  border: 0;
+  background: transparent;
+  padding: 10px 16px;
+  color: var(--muted);
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  font-weight: 600;
+}
+.tab:hover { color: var(--ink); }
+.tab.active {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+}
+.tabpanel { padding: 18px 0 28px; }
+
+.searchbox { position: relative; }
+.search-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0 12px;
+  transition: border-color .15s, box-shadow .15s;
+}
+.search-input-wrap:focus-within {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(15, 118, 110, .14);
+}
+.search-icon { display: flex; flex: 0 0 auto; color: var(--muted); }
+#search-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 48px;
+  border: 0;
+  outline: none;
+  background: transparent;
+  font-size: 17px;
+}
+.clear-btn {
+  border: 0;
+  background: #eef1f4;
+  color: var(--muted);
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  flex: 0 0 auto;
+  font-size: 16px;
+  line-height: 1;
+}
+.clear-btn:hover { color: var(--ink); }
+
+.suggestions {
+  list-style: none;
+  margin: 6px 0 0;
+  padding: 6px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: 0 8px 20px rgba(28, 39, 51, .1);
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 56px;
+  z-index: 20;
+  max-height: 320px;
+  overflow: auto;
+}
+.suggestions li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.suggestions li:hover { background: var(--primary-weak); }
+.sug-word { font-weight: 600; min-width: 110px; }
+.sug-ipa { color: var(--muted); font-size: 12px; min-width: 84px; }
+.sug-mean {
+  flex: 1 1 auto;
+  min-width: 0;
+  color: var(--muted);
+  font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+.chip {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  border-radius: 999px;
+  padding: 4px 12px;
+  font-size: 13px;
+  color: var(--muted);
+}
+.chip:hover { color: var(--primary); border-color: var(--primary); }
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+  margin: 16px 0;
+}
+.filter-label {
+  font-size: 13px;
+  color: var(--muted);
+}
+.seg {
+  display: inline-flex;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--surface);
+  flex-wrap: wrap;
+}
+.seg-btn {
+  border: 0;
+  background: transparent;
+  padding: 7px 14px;
+  font-size: 13px;
+  color: var(--muted);
+  border-right: 1px solid var(--border);
+}
+.seg-btn:last-child { border-right: 0; }
+.seg-btn:hover { color: var(--ink); background: #f7f9fb; }
+.seg-btn.active {
+  background: var(--primary);
+  color: #fff;
+}
+
+.result-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  color: var(--muted);
+  font-size: 13px;
+  margin: 4px 0 10px;
+}
+.empty {
+  background: var(--surface);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius);
+  color: var(--muted);
+  padding: 26px 18px;
+  text-align: center;
+}
+
+.group {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  margin-bottom: 12px;
+}
+.group-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 10px;
+  margin-bottom: 10px;
+}
+.group-words {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+  word-break: break-word;
+}
+.group-words mark {
+  background: #fde68a;
+  color: inherit;
+  border-radius: 3px;
+  padding: 0 2px;
+}
+.badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 2px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.b-level { color: #fff; }
+.b-level.lv0 { background: #15803d; }
+.b-level.lv1 { background: #0369a1; }
+.b-level.lv2 { background: #6d28d9; }
+.b-level.lv3 { background: #b45309; }
+.b-level.lv4 { background: #be123c; }
+.b-source { background: #eef1f4; color: #475569; }
+
+.word-list { display: grid; gap: 6px; margin: 0 0 10px; }
+.word-row {
+  display: grid;
+  grid-template-columns: minmax(150px, 220px) 1fr;
+  gap: 8px 14px;
+  align-items: baseline;
+}
+.word-en { font-weight: 600; overflow-wrap: anywhere; }
+.word-pos { color: var(--muted); font-weight: 400; margin-left: 6px; font-size: 13px; }
+.word-ipa { color: var(--muted); font-weight: 400; margin-left: 8px; font-size: 13px; }
+.word-mean { color: #33414f; }
+.note {
+  border-top: 1px solid var(--border);
+  padding-top: 10px;
+  color: #33414f;
+  font-size: 14px;
+}
+.note b { color: var(--primary); font-weight: 600; }
+
+.browse-head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin: 18px 0 10px;
+  padding-bottom: 6px;
+  border-bottom: 2px solid var(--border);
+}
+.browse-head .bh-title { font-size: 17px; font-weight: 700; }
+.browse-head .bh-count { color: var(--muted); font-size: 13px; }
+.fuzzy-head {
+  margin: 18px 0 10px;
+  padding: 8px 12px;
+  background: #fff8e6;
+  border: 1px solid #f0d9a8;
+  border-radius: var(--radius);
+  color: #7c4a03;
+  font-size: 13px;
+  font-weight: 600;
+}
+.group.compact .word-row { grid-template-columns: minmax(130px, 200px) 1fr; }
+.group.compact .word-row { font-size: 14px; }
+.group.compact .note { font-size: 13px; }
+.group.compact .word-en { cursor: pointer; }
+.group.compact .word-en:hover { color: var(--primary); text-decoration: underline; }
+
+.admin-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.btn {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 8px 14px;
+  font-size: 14px;
+  font-weight: 600;
+}
+.btn:hover { border-color: var(--primary); color: var(--primary); }
+.btn.primary { background: var(--primary); border-color: var(--primary); color: #fff; }
+.btn.primary:hover { background: #0d6a63; }
+.btn.danger { color: var(--danger); }
+.btn.danger:hover { border-color: var(--danger); }
+.btn.small { padding: 4px 10px; font-size: 13px; font-weight: 500; }
+
+.admin-form, .admin-import {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-bottom: 16px;
+}
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.field label {
+  display: block;
+  font-size: 13px;
+  color: var(--muted);
+  margin-bottom: 5px;
+}
+.field input, .field select, .field textarea {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 10px;
+  background: #fff;
+}
+.field textarea { resize: vertical; min-height: 90px; }
+.form-actions { display: flex; gap: 10px; }
+.form-hint { font-size: 12px; color: var(--muted); margin: 0 0 10px; }
+.admin-row {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  margin-bottom: 10px;
+}
+.admin-row .group-top { margin-bottom: 6px; }
+.admin-row .note { border-top: 0; padding-top: 0; font-size: 13px; }
+.admin-actions { display: flex; gap: 8px; margin-top: 8px; }
+.admin-id { color: var(--muted); font-size: 12px; }
+.message {
+  border-radius: var(--radius);
+  padding: 10px 14px;
+  margin-bottom: 12px;
+  font-size: 14px;
+}
+.message.ok { background: #e8f5ee; color: #14532d; border: 1px solid #bbdfca; }
+.message.err { background: #fdecef; color: #9f1239; border: 1px solid #f3c0ca; }
+
+footer {
+  border-top: 1px solid var(--border);
+  padding: 18px 0 30px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+@media (max-width: 720px) {
+  .wrap { padding: 0 14px; }
+  .topbar-inner { flex-direction: column; align-items: flex-start; gap: 6px; }
+  .stats { white-space: normal; }
+  .tab { flex: 1 1 0; text-align: center; padding: 10px 6px; }
+  .word-row { grid-template-columns: 1fr; gap: 2px; }
+  .group.compact .word-row { grid-template-columns: 1fr; }
+  .form-grid { grid-template-columns: 1fr; }
+  .sug-word { min-width: 90px; }
+}
+</style>
+<style>/* Premium redesign overrides */
+:root {
+  --bg: #f5f6f8;
+  --surface: #ffffff;
+  --border: #e2e5ea;
+  --ink: #171a21;
+  --muted: #68717e;
+  --primary: #0d6b57;
+  --primary-weak: #e7f3ef;
+  --accent: #b26a3b;
+  --danger: #b0254f;
+  --radius: 8px;
+}
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: -apple-system, "Segoe UI", "Microsoft YaHei", "PingFang SC", "Noto Sans SC", sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: rgba(13, 107, 87, 0.16);
+}
+
+.brand-name,
+.group-words,
+.sug-word,
+.word-en,
+.bh-title,
+.admin-row .word-en {
+  font-family: "Songti SC", "Noto Serif SC", "Source Han Serif SC", "STSong", "SimSun", serif;
+}
+
+.topbar {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+.topbar-inner {
+  padding-top: 22px;
+  padding-bottom: 18px;
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+.brand-mark {
+  flex: 0 0 auto;
+  width: 5px;
+  height: 30px;
+  border-radius: 3px;
+  background: var(--accent);
+}
+.brand-name {
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: 0;
+  line-height: 1.2;
+}
+.brand-sub {
+  color: var(--muted);
+  font-size: 12px;
+  margin-top: 3px;
+}
+.stats {
+  border: 1px solid var(--border);
+  background: #fafbfc;
+  border-radius: 999px;
+  padding: 6px 14px;
+  color: var(--muted);
+}
+.stats b {
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.tabs {
+  gap: 2px;
+  margin-top: 20px;
+}
+.tab {
+  padding: 11px 18px;
+  font-size: 14px;
+  font-weight: 600;
+  border-bottom: 2px solid transparent;
+}
+.tab:hover { color: var(--ink); }
+.tab.active {
+  color: var(--ink);
+  border-bottom-color: var(--accent);
+}
+
+.search-input-wrap {
+  height: 54px;
+  background: var(--surface);
+  box-shadow: 0 1px 2px rgba(23, 26, 33, 0.05);
+}
+.search-input-wrap:focus-within {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 4px rgba(13, 107, 87, 0.12);
+}
+#search-input {
+  font-size: 17px;
+}
+.search-icon { color: var(--muted); }
+
+.suggestions {
+  top: 60px;
+  border-radius: var(--radius);
+  box-shadow: 0 14px 30px rgba(23, 26, 33, 0.13);
+}
+.suggestions li { border-radius: 6px; }
+.suggestions li:hover { background: var(--primary-weak); }
+.sug-word { font-size: 15px; }
+.sug-ipa { color: var(--muted); }
+.sug-mean { color: var(--muted); }
+
+.chip {
+  background: #fafbfc;
+  border-radius: 999px;
+  padding: 5px 13px;
+}
+.chip:hover {
+  background: var(--surface);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.seg {
+  background: #eef0f3;
+  border: 0;
+  border-radius: var(--radius);
+  padding: 3px;
+  gap: 2px;
+  overflow: visible;
+}
+.seg-btn {
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted);
+  font-weight: 600;
+}
+.seg-btn:hover {
+  background: var(--surface);
+  color: var(--ink);
+}
+.seg-btn.active {
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: 0 1px 2px rgba(23, 26, 33, 0.1);
+}
+
+.result-head {
+  color: var(--muted);
+  font-size: 12px;
+}
+.empty {
+  border: 1px dashed #d3d8de;
+  border-radius: var(--radius);
+  padding: 34px 18px;
+  background: var(--surface);
+}
+
+.group {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: 0 1px 2px rgba(23, 26, 33, 0.04);
+  padding: 16px 18px;
+  transition: box-shadow 0.15s ease, border-color 0.15s ease;
+}
+.group:hover {
+  border-color: #d3d8df;
+  box-shadow: 0 8px 22px rgba(23, 26, 33, 0.07);
+}
+.group-words {
+  font-size: 19px;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+.group-words mark {
+  background: #fdeed7;
+  color: inherit;
+  border-radius: 3px;
+  padding: 0 2px;
+}
+
+.badge {
+  border-radius: 999px;
+  padding: 3px 10px;
+  font-size: 11.5px;
+  font-weight: 600;
+}
+.b-level.lv0 { background: #e6f4ec; color: #1c7a48; }
+.b-level.lv1 { background: #e7f0fb; color: #1e5fa8; }
+.b-level.lv2 { background: #f0eafb; color: #6d3fb8; }
+.b-level.lv3 { background: #fdf0e0; color: #a15c07; }
+.b-level.lv4 { background: #fbe7ee; color: #b0254f; }
+.b-source { background: #f1f3f5; color: #5a6472; }
+
+.word-row {
+  gap: 10px 16px;
+  padding: 2px 0;
+}
+.word-en {
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+.word-ipa {
+  font-size: 13px;
+  font-family: inherit;
+}
+.word-pos { font-size: 12.5px; }
+.word-mean { color: #3a4450; }
+
+.note {
+  border-top: 1px solid var(--border);
+  margin-top: 8px;
+  padding-top: 12px;
+  font-size: 13.5px;
+  color: #3a4450;
+}
+.note b { color: var(--accent); }
+
+.browse-head {
+  margin-top: 22px;
+  border-bottom: 1px solid var(--border);
+}
+.bh-title { font-size: 18px; }
+.fuzzy-head {
+  background: #fdf6e9;
+  border: 1px solid #eed9b4;
+  color: #8a5a12;
+}
+
+.btn {
+  border-radius: var(--radius);
+  padding: 9px 15px;
+  box-shadow: 0 1px 2px rgba(23, 26, 33, 0.04);
+  font-weight: 600;
+}
+.btn:hover {
+  background: var(--surface);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+.btn.primary {
+  background: var(--primary);
+  border-color: var(--primary);
+  box-shadow: 0 2px 6px rgba(13, 107, 87, 0.22);
+}
+.btn.primary:hover { background: #0a5746; color: #fff; }
+.btn.small { padding: 5px 11px; }
+
+.admin-form,
+.admin-import,
+.admin-row {
+  border-radius: var(--radius);
+  box-shadow: 0 1px 2px rgba(23, 26, 33, 0.04);
+}
+.admin-row .group-top {
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 8px;
+  margin-bottom: 8px;
+}
+.admin-id {
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.message.ok {
+  background: #e8f5ee;
+  border-color: #bcdcc9;
+  color: #14532d;
+}
+.message.err {
+  background: #fdecef;
+  border-color: #f0c1cb;
+  color: #9f1239;
+}
+
+footer {
+  border-top: 1px solid var(--border);
+  color: var(--muted);
+}
+
+@media (max-width: 720px) {
+  .topbar-inner { padding-top: 16px; padding-bottom: 14px; }
+  .brand-mark { height: 24px; }
+  .brand-name { font-size: 21px; }
+  .stats { padding: 5px 12px; }
+  .tab { padding: 10px 8px; }
+  .search-input-wrap { height: 48px; }
+  #search-input { font-size: 16px; }
+  .group { padding: 13px 14px; }
+  .group-words { font-size: 17px; }
+  .word-en { font-size: 15px; }
+}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="wrap topbar-inner">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true"></span>
+      <div>
+        <div class="brand-name">易混词汇查词</div>
+        <div class="brand-sub">小学 → 六级 · 人教/译林词库</div>
+      </div>
+    </div>
+    <div class="stats" id="stat-groups">词条 <b>0</b> 组 · 单词 <b>0</b> 个</div>
+  </div>
+</header>
+
+<main class="wrap">
+  <nav class="tabs" role="tablist">
+    <button class="tab active" data-tab="search" role="tab">查词</button>
+    <button class="tab" data-tab="browse" role="tab">全部词条</button>
+    <button class="tab" data-tab="admin" role="tab">词库维护</button>
+  </nav>
+
+  <section id="tab-search" class="tabpanel" data-panel="search">
+    <div class="searchbox">
+      <div class="search-input-wrap">
+        <span class="search-icon" aria-hidden="true">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><path d="M21 21l-4.3-4.3"></path></svg>
+        </span>
+        <input id="search-input" type="search" placeholder="输入单词，如 affect、quite" autocomplete="off" aria-label="输入单词">
+        <button id="search-clear" class="clear-btn" title="清空" hidden>&times;</button>
+      </div>
+      <ul id="suggestions" class="suggestions" hidden></ul>
+      <div class="chips" id="search-chips">
+        <button class="chip" data-sample="affect">affect</button>
+        <button class="chip" data-sample="quite">quite</button>
+        <button class="chip" data-sample="adapt">adapt</button>
+        <button class="chip" data-sample="stationery">stationery</button>
+        <button class="chip" data-sample="weather">weather</button>
+      </div>
+    </div>
+    <div class="filters">
+      <span class="filter-label">难度筛选</span>
+      <div class="seg" id="level-filter-search"></div>
+    </div>
+    <div id="search-results"></div>
+  </section>
+
+  <section id="tab-browse" class="tabpanel" data-panel="browse" hidden>
+    <div class="filters">
+      <span class="filter-label">难度筛选</span>
+      <div class="seg" id="level-filter-browse"></div>
+      <div class="seg" id="browse-mode">
+        <button class="seg-btn active" data-mode="letter">按字母</button>
+        <button class="seg-btn" data-mode="level">按难度</button>
+      </div>
+    </div>
+    <div id="browse-list"></div>
+  </section>
+
+  <section id="tab-admin" class="tabpanel" data-panel="admin" hidden>
+    <div class="admin-bar">
+      <button class="btn primary" id="btn-add">新增词条</button>
+      <button class="btn" id="btn-export">导出词库</button>
+      <button class="btn" id="btn-import">导入词库</button>
+      <button class="btn danger" id="btn-reset">恢复内置</button>
+      <input type="file" id="import-file" accept=".json,application/json" hidden>
+    </div>
+    <div id="admin-message"></div>
+    <div id="admin-form" class="admin-form" hidden>
+      <div class="form-grid">
+        <div class="field">
+          <label>难度</label>
+          <select id="f-level">
+            <option>小学</option><option>初中</option><option>高中</option><option>四级</option><option>六级</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>来源</label>
+          <select id="f-source">
+            <option>人教/译林</option><option>人教版</option><option>译林版</option><option>其他教材</option><option>四六级词表</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>编号</label>
+          <input id="f-id" disabled>
+        </div>
+      </div>
+      <div class="field">
+        <label>单词列表（每行一个：单词|词性|音标|释义，词性、音标可省略）</label>
+        <textarea id="f-words" placeholder="affect|v.|/əˈfekt/|影响&#10;effect|n.|/ɪˈfekt/|结果；影响"></textarea>
+      </div>
+      <p class="form-hint" id="f-hint"></p>
+      <div class="field">
+        <label>辨析要点</label>
+        <textarea id="f-note" placeholder="一句话说明几个词的用法差异"></textarea>
+      </div>
+      <div class="form-actions">
+        <button class="btn primary" id="btn-save">保存词条</button>
+        <button class="btn" id="btn-cancel">取消</button>
+      </div>
+    </div>
+    <div id="admin-import" class="admin-import" hidden>
+      <div class="field">
+        <label>粘贴词库 JSON（将替换当前全部词条）</label>
+        <textarea id="import-text" style="min-height:160px" placeholder='[{"id":"g001","level":"小学","source":"人教/译林","words":[{"word":"see","pos":"v.","meaning":"看见"}],"note":"..."}]'></textarea>
+      </div>
+      <div class="form-actions">
+        <button class="btn primary" id="btn-import-confirm">确认导入</button>
+        <button class="btn" id="btn-import-cancel">取消</button>
+      </div>
+    </div>
+    <div id="admin-list"></div>
+  </section>
+</main>
+
+<footer class="wrap">
+  难度与版本归属为参考标注，可在“词库维护”中修正。词库整理自人教版、译林版课标层级词汇及四六级词表。
+</footer>
+
+<script type="application/json" id="wordbank-data">
+[{"id":"g001","level":"小学","source":"人教/译林","words":[{"word":"see","pos":"v.","meaning":"看见","ipa":"/siː/"},{"word":"sea","pos":"n.","meaning":"大海","ipa":"/siː/"}],"note":"see 是动词“看见”，sea 是名词“大海”，读音相同、拼写差一个字母。"},{"id":"g002","level":"小学","source":"人教/译林","words":[{"word":"hear","pos":"v.","meaning":"听见","ipa":"/hɪə(r)/"},{"word":"here","pos":"adv.","meaning":"这里","ipa":"/hɪə(r)/"}],"note":"hear 是动词“听见”，here 是副词“这里”，读音相同。"},{"id":"g003","level":"小学","source":"人教/译林","words":[{"word":"write","pos":"v.","meaning":"写","ipa":"/raɪt/"},{"word":"right","pos":"adj./n.","meaning":"正确的；右边","ipa":"/raɪt/"}],"note":"write 是动词“写”，right 是形容词“正确的”或名词“右边”，读音相同。"},{"id":"g004","level":"小学","source":"人教/译林","words":[{"word":"their","pos":"pron.","meaning":"他们的","ipa":"/ðeə(r)/"},{"word":"there","pos":"adv.","meaning":"那里","ipa":"/ðeə(r)/"},{"word":"they're","pos":"phr.","meaning":"他们是（they are 缩写）","ipa":"/ðeə(r)/"}],"note":"their 表“他们的”，there 表“那里”，they're 是 they are 的缩写。"},{"id":"g005","level":"小学","source":"人教/译林","words":[{"word":"too","pos":"adv.","meaning":"也；太","ipa":"/tuː/"},{"word":"to","pos":"prep.","meaning":"到；向","ipa":"/tuː/"},{"word":"two","pos":"num.","meaning":"二","ipa":"/tuː/"}],"note":"too 作“也/太”，to 是介词，two 是数字“二”，读音相同。"},{"id":"g006","level":"小学","source":"人教/译林","words":[{"word":"our","pos":"pron.","meaning":"我们的","ipa":"/ˈaʊə(r)/"},{"word":"hour","pos":"n.","meaning":"小时","ipa":"/ˈaʊə(r)/"}],"note":"our 表“我们的”，hour 是名词“小时”，读音相同。"},{"id":"g007","level":"小学","source":"人教/译林","words":[{"word":"know","pos":"v.","meaning":"知道","ipa":"/nəʊ/"},{"word":"no","pos":"adv./adj.","meaning":"不；没有","ipa":"/nəʊ/"}],"note":"know 是动词“知道”，no 表示否定“不/没有”，读音相同。"},{"id":"g008","level":"小学","source":"人教/译林","words":[{"word":"new","pos":"adj.","meaning":"新的","ipa":"/njuː/"},{"word":"knew","pos":"v.","meaning":"know 的过去式","ipa":"/njuː/"}],"note":"new 是形容词“新的”，knew 是动词 know 的过去式，读音相同。"},{"id":"g009","level":"小学","source":"人教/译林","words":[{"word":"by","pos":"prep.","meaning":"通过；在…旁边","ipa":"/baɪ/"},{"word":"buy","pos":"v.","meaning":"买","ipa":"/baɪ/"},{"word":"bye","pos":"int.","meaning":"再见","ipa":"/baɪ/"}],"note":"by 是介词，buy 是动词“买”，bye 是告别用语，读音相同。"},{"id":"g010","level":"小学","source":"人教/译林","words":[{"word":"eye","pos":"n.","meaning":"眼睛","ipa":"/aɪ/"},{"word":"I","pos":"pron.","meaning":"我","ipa":"/aɪ/"}],"note":"eye 是名词“眼睛”，I 是人称代词“我”，读音相同。"},{"id":"g011","level":"小学","source":"人教/译林","words":[{"word":"meat","pos":"n.","meaning":"肉","ipa":"/miːt/"},{"word":"meet","pos":"v.","meaning":"遇见；见面","ipa":"/miːt/"}],"note":"meat 是名词“肉”，meet 是动词“遇见”，读音相同。"},{"id":"g012","level":"小学","source":"人教/译林","words":[{"word":"week","pos":"n.","meaning":"星期","ipa":"/wiːk/"},{"word":"weak","pos":"adj.","meaning":"虚弱的","ipa":"/wiːk/"}],"note":"week 是名词“星期”，weak 是形容词“虚弱的”，读音相同。"},{"id":"g013","level":"小学","source":"人教/译林","words":[{"word":"where","pos":"adv.","meaning":"哪里","ipa":"/weə(r)/"},{"word":"wear","pos":"v.","meaning":"穿；戴","ipa":"/weə(r)/"}],"note":"where 是疑问词“哪里”，wear 是动词“穿/戴”，读音相同。"},{"id":"g014","level":"小学","source":"人教/译林","words":[{"word":"what","pos":"pron.","meaning":"什么","ipa":"/wɒt/"},{"word":"wait","pos":"v.","meaning":"等待","ipa":"/weɪt/"}],"note":"what 是疑问词“什么”，wait 是动词“等待”，拼写相近。"},{"id":"g015","level":"小学","source":"人教/译林","words":[{"word":"sun","pos":"n.","meaning":"太阳","ipa":"/sʌn/"},{"word":"son","pos":"n.","meaning":"儿子","ipa":"/sʌn/"}],"note":"sun 是“太阳”，son 是“儿子”，读音相同。"},{"id":"g016","level":"小学","source":"人教/译林","words":[{"word":"hi","pos":"int.","meaning":"你好","ipa":"/haɪ/"},{"word":"high","pos":"adj.","meaning":"高的","ipa":"/haɪ/"}],"note":"hi 是打招呼用语，high 是形容词“高的”，读音相同。"},{"id":"g017","level":"小学","source":"人教/译林","words":[{"word":"four","pos":"num.","meaning":"四","ipa":"/fɔː(r)/"},{"word":"for","pos":"prep.","meaning":"为了；给","ipa":"/fɔː(r)/"}],"note":"four 是数字“四”，for 是介词，读音相同。"},{"id":"g018","level":"小学","source":"人教/译林","words":[{"word":"red","pos":"adj./n.","meaning":"红色的","ipa":"/red/"},{"word":"read","pos":"v.","meaning":"阅读","ipa":"/riːd/"}],"note":"red 表“红色”，read 是动词“阅读”，拼写相近。"},{"id":"g019","level":"小学","source":"人教/译林","words":[{"word":"foot","pos":"n.","meaning":"脚","ipa":"/fʊt/"},{"word":"food","pos":"n.","meaning":"食物","ipa":"/fuːd/"}],"note":"foot 是“脚”，food 是“食物”，只差一个字母。"},{"id":"g020","level":"小学","source":"人教/译林","words":[{"word":"hand","pos":"n.","meaning":"手","ipa":"/hænd/"},{"word":"hard","pos":"adj./adv.","meaning":"困难的；努力地","ipa":"/hɑːd/"}],"note":"hand 是“手”，hard 是“困难的/努力地”，拼写相近。"},{"id":"g021","level":"小学","source":"人教/译林","words":[{"word":"mouse","pos":"n.","meaning":"老鼠","ipa":"/maʊs/"},{"word":"mouth","pos":"n.","meaning":"嘴","ipa":"/maʊθ/"}],"note":"mouse 是“老鼠”，mouth 是“嘴”，结尾字母不同。"},{"id":"g022","level":"小学","source":"人教/译林","words":[{"word":"house","pos":"n.","meaning":"房子","ipa":"/haʊs/"},{"word":"horse","pos":"n.","meaning":"马","ipa":"/hɔːs/"}],"note":"house 是“房子”，horse 是“马”，中间元音不同。"},{"id":"g023","level":"小学","source":"人教/译林","words":[{"word":"quiet","pos":"adj.","meaning":"安静的","ipa":"/ˈkwaɪət/"},{"word":"quite","pos":"adv.","meaning":"相当；十分","ipa":"/kwaɪt/"}],"note":"quiet 是形容词“安静的”，quite 是副词“相当”，e 的位置不同。"},{"id":"g024","level":"小学","source":"人教/译林","words":[{"word":"hole","pos":"n.","meaning":"洞","ipa":"/həʊl/"},{"word":"whole","pos":"adj.","meaning":"整个的","ipa":"/həʊl/"}],"note":"hole 是“洞”，whole 是“整个的”，读音相同。"},{"id":"g025","level":"小学","source":"人教/译林","words":[{"word":"peace","pos":"n.","meaning":"和平","ipa":"/piːs/"},{"word":"piece","pos":"n.","meaning":"碎片；一块","ipa":"/piːs/"}],"note":"peace 是“和平”，piece 是“一片/一块”，读音相同。"},{"id":"g026","level":"小学","source":"人教/译林","words":[{"word":"sheep","pos":"n.","meaning":"绵羊","ipa":"/ʃiːp/"},{"word":"ship","pos":"n.","meaning":"船","ipa":"/ʃɪp/"},{"word":"shop","pos":"n.","meaning":"商店","ipa":"/ʃɒp/"}],"note":"sheep 是“绵羊”，ship 是“船”，shop 是“商店”，元音依次变化。"},{"id":"g027","level":"小学","source":"人教/译林","words":[{"word":"sail","pos":"v./n.","meaning":"航行","ipa":"/seɪl/"},{"word":"sale","pos":"n.","meaning":"出售；减价","ipa":"/seɪl/"}],"note":"sail 是“航行”，sale 是“出售”，读音相同。"},{"id":"g028","level":"小学","source":"人教/译林","words":[{"word":"tax","pos":"n.","meaning":"税","ipa":"/tæks/"},{"word":"taxi","pos":"n.","meaning":"出租车","ipa":"/ˈtæksi/"}],"note":"tax 是“税”，taxi 是“出租车”，差一个 i。"},{"id":"g029","level":"小学","source":"人教/译林","words":[{"word":"than","pos":"conj.","meaning":"比","ipa":"/ðæn/"},{"word":"then","pos":"adv.","meaning":"然后","ipa":"/ðen/"}],"note":"than 用于比较“比”，then 表“然后”，元音不同。"},{"id":"g030","level":"小学","source":"人教/译林","words":[{"word":"pilot","pos":"n.","meaning":"飞行员","ipa":"/ˈpaɪlət/"},{"word":"pillow","pos":"n.","meaning":"枕头","ipa":"/ˈpɪləʊ/"}],"note":"pilot 是“飞行员”，pillow 是“枕头”，拼写相近。"},{"id":"g031","level":"小学","source":"人教/译林","words":[{"word":"march","pos":"n.","meaning":"三月；行军","ipa":"/mɑːtʃ/"},{"word":"match","pos":"n./v.","meaning":"比赛；匹配","ipa":"/mætʃ/"}],"note":"march 表“三月/行军”，match 表“比赛/匹配”，拼写相近。"},{"id":"g032","level":"小学","source":"人教/译林","words":[{"word":"high","pos":"adj.","meaning":"高的","ipa":"/haɪ/"},{"word":"tall","pos":"adj.","meaning":"高的","ipa":"/tɔːl/"}],"note":"high 多用于山、楼、天空，tall 多用于人、树等竖立物体。"},{"id":"g033","level":"小学","source":"人教/译林","words":[{"word":"look","pos":"v.","meaning":"看（动作）","ipa":"/lʊk/"},{"word":"see","pos":"v.","meaning":"看见（结果）","ipa":"/siː/"},{"word":"watch","pos":"v.","meaning":"观看（动态）","ipa":"/wɒtʃ/"},{"word":"read","pos":"v.","meaning":"阅读（文字）","ipa":"/riːd/"}],"note":"look 强调看的动作，see 强调看见的结果，watch 指观看动态画面，read 指阅读文字。"},{"id":"g034","level":"小学","source":"人教/译林","words":[{"word":"listen","pos":"v.","meaning":"听（动作）","ipa":"/ˈlɪsn/"},{"word":"hear","pos":"v.","meaning":"听见（结果）","ipa":"/hɪə(r)/"}],"note":"listen 强调听的主动动作，hear 强调听到的结果。"},{"id":"g035","level":"小学","source":"人教/译林","words":[{"word":"you're","pos":"phr.","meaning":"你是（you are 缩写）","ipa":"/jʊə(r)/"},{"word":"your","pos":"pron.","meaning":"你的","ipa":"/jɔː(r)/"}],"note":"you're 是 you are 的缩写，your 是物主代词“你的”。"},{"id":"g036","level":"小学","source":"人教/译林","words":[{"word":"it's","pos":"phr.","meaning":"它是（it is 缩写）","ipa":"/ɪts/"},{"word":"its","pos":"pron.","meaning":"它的","ipa":"/ɪts/"}],"note":"it's 是 it is 的缩写，its 是物主代词“它的”。"},{"id":"g037","level":"小学","source":"人教/译林","words":[{"word":"this","pos":"pron.","meaning":"这个","ipa":"/ðɪs/"},{"word":"these","pos":"pron.","meaning":"这些","ipa":"/ðiːz/"},{"word":"those","pos":"pron.","meaning":"那些","ipa":"/ðəʊz/"}],"note":"this 表近处单数，these 表近处复数，those 表远处复数。"},{"id":"g038","level":"小学","source":"人教/译林","words":[{"word":"three","pos":"num.","meaning":"三","ipa":"/θriː/"},{"word":"tree","pos":"n.","meaning":"树","ipa":"/triː/"}],"note":"three 是数字“三”，tree 是“树”，拼写相近。"},{"id":"g039","level":"小学","source":"人教/译林","words":[{"word":"walk","pos":"v./n.","meaning":"走路","ipa":"/wɔːk/"},{"word":"work","pos":"v./n.","meaning":"工作","ipa":"/wɜːk/"}],"note":"walk 是“走路”，work 是“工作”，元音不同。"},{"id":"g040","level":"小学","source":"人教/译林","words":[{"word":"want","pos":"v.","meaning":"想要","ipa":"/wɒnt/"},{"word":"what","pos":"pron.","meaning":"什么","ipa":"/wɒt/"}],"note":"want 是“想要”，what 是“什么”，拼写相近。"},{"id":"g041","level":"小学","source":"人教/译林","words":[{"word":"wash","pos":"v.","meaning":"洗","ipa":"/wɒʃ/"},{"word":"watch","pos":"v./n.","meaning":"观看；手表","ipa":"/wɒtʃ/"}],"note":"wash 是“洗”，watch 是“观看/手表”，拼写相近。"},{"id":"g042","level":"小学","source":"人教/译林","words":[{"word":"shirt","pos":"n.","meaning":"衬衫","ipa":"/ʃɜːt/"},{"word":"skirt","pos":"n.","meaning":"裙子","ipa":"/skɜːt/"}],"note":"shirt 是“衬衫”，skirt 是“裙子”，拼写相近。"},{"id":"g043","level":"小学","source":"人教/译林","words":[{"word":"short","pos":"adj.","meaning":"短的","ipa":"/ʃɔːt/"},{"word":"shirt","pos":"n.","meaning":"衬衫","ipa":"/ʃɜːt/"}],"note":"short 是“短的”，shirt 是“衬衫”，元音互换。"},{"id":"g044","level":"小学","source":"人教/译林","words":[{"word":"story","pos":"n.","meaning":"故事","ipa":"/ˈstɔːri/"},{"word":"sorry","pos":"adj.","meaning":"抱歉的","ipa":"/ˈsɒri/"}],"note":"story 是“故事”，sorry 是“抱歉的”，拼写相近。"},{"id":"g045","level":"小学","source":"人教/译林","words":[{"word":"tall","pos":"adj.","meaning":"高的","ipa":"/tɔːl/"},{"word":"tell","pos":"v.","meaning":"告诉","ipa":"/tel/"}],"note":"tall 是“高的”，tell 是“告诉”，元音不同。"},{"id":"g046","level":"小学","source":"人教/译林","words":[{"word":"thank","pos":"v.","meaning":"感谢","ipa":"/θæŋk/"},{"word":"think","pos":"v.","meaning":"想；认为","ipa":"/θɪŋk/"}],"note":"thank 是“感谢”，think 是“想/认为”，只差一个字母。"},{"id":"g047","level":"小学","source":"人教/译林","words":[{"word":"fast","pos":"adj./adv.","meaning":"快的","ipa":"/fɑːst/"},{"word":"first","pos":"num./adj.","meaning":"第一","ipa":"/fɜːst/"}],"note":"fast 表“快”，first 表“第一”，拼写相近。"},{"id":"g048","level":"小学","source":"人教/译林","words":[{"word":"fish","pos":"n.","meaning":"鱼","ipa":"/fɪʃ/"},{"word":"dish","pos":"n.","meaning":"盘子；菜肴","ipa":"/dɪʃ/"}],"note":"fish 是“鱼”，dish 是“盘子/菜肴”，首字母不同。"},{"id":"g049","level":"小学","source":"人教/译林","words":[{"word":"kite","pos":"n.","meaning":"风筝","ipa":"/kaɪt/"},{"word":"bike","pos":"n.","meaning":"自行车","ipa":"/baɪk/"}],"note":"kite 是“风筝”，bike 是“自行车”，首字母不同。"},{"id":"g050","level":"小学","source":"人教/译林","words":[{"word":"lake","pos":"n.","meaning":"湖","ipa":"/leɪk/"},{"word":"like","pos":"v./prep.","meaning":"喜欢；像","ipa":"/laɪk/"}],"note":"lake 是“湖”，like 是“喜欢/像”，元音不同。"},{"id":"g051","level":"小学","source":"人教/译林","words":[{"word":"many","pos":"adj./pron.","meaning":"许多","ipa":"/ˈmeni/"},{"word":"money","pos":"n.","meaning":"钱","ipa":"/ˈmʌni/"}],"note":"many 表“许多”，money 是“钱”，拼写相近。"},{"id":"g052","level":"小学","source":"人教/译林","words":[{"word":"nice","pos":"adj.","meaning":"好的","ipa":"/naɪs/"},{"word":"nine","pos":"num.","meaning":"九","ipa":"/naɪn/"}],"note":"nice 是“好的”，nine 是数字“九”，拼写相近。"},{"id":"g053","level":"初中","source":"人教/译林","words":[{"word":"angel","pos":"n.","meaning":"天使","ipa":"/ˈeɪndʒl/"},{"word":"angle","pos":"n.","meaning":"角度","ipa":"/ˈæŋɡl/"}],"note":"angel 是“天使”，angle 是“角度”，e 和 l 顺序不同。"},{"id":"g054","level":"初中","source":"人教/译林","words":[{"word":"bare","pos":"adj.","meaning":"赤裸的","ipa":"/beə(r)/"},{"word":"bear","pos":"n./v.","meaning":"熊；承受","ipa":"/beə(r)/"}],"note":"bare 是“赤裸的”，bear 是“熊/承受”，读音相同。"},{"id":"g055","level":"初中","source":"人教/译林","words":[{"word":"brake","pos":"n./v.","meaning":"刹车","ipa":"/breɪk/"},{"word":"break","pos":"v./n.","meaning":"打破；休息","ipa":"/breɪk/"}],"note":"brake 是“刹车”，break 是“打破/休息”，读音相同。"},{"id":"g056","level":"初中","source":"人教/译林","words":[{"word":"breath","pos":"n.","meaning":"呼吸","ipa":"/breθ/"},{"word":"breathe","pos":"v.","meaning":"呼吸","ipa":"/briːð/"}],"note":"breath 是名词，breathe 是动词，th 发音不同。"},{"id":"g057","level":"初中","source":"人教/译林","words":[{"word":"coarse","pos":"adj.","meaning":"粗糙的","ipa":"/kɔːs/"},{"word":"course","pos":"n.","meaning":"课程；路线","ipa":"/kɔːs/"}],"note":"coarse 是“粗糙的”，course 是“课程/路线”，拼写相近。"},{"id":"g058","level":"初中","source":"人教/译林","words":[{"word":"dairy","pos":"n.","meaning":"乳品店","ipa":"/ˈdeəri/"},{"word":"diary","pos":"n.","meaning":"日记","ipa":"/ˈdaɪəri/"}],"note":"dairy 是“乳品店”，diary 是“日记”，a 和 i 位置不同。"},{"id":"g059","level":"初中","source":"人教/译林","words":[{"word":"floor","pos":"n.","meaning":"地板","ipa":"/flɔː(r)/"},{"word":"flour","pos":"n.","meaning":"面粉","ipa":"/ˈflaʊə(r)/"}],"note":"floor 是“地板”，flour 是“面粉”，读音相近。"},{"id":"g060","level":"初中","source":"人教/译林","words":[{"word":"forth","pos":"adv.","meaning":"向前","ipa":"/fɔːθ/"},{"word":"fourth","pos":"num.","meaning":"第四","ipa":"/fɔːθ/"}],"note":"forth 是“向前”，fourth 是“第四”，读音相同。"},{"id":"g061","level":"初中","source":"人教/译林","words":[{"word":"incident","pos":"n.","meaning":"事件","ipa":"/ˈɪnsɪdənt/"},{"word":"accident","pos":"n.","meaning":"事故","ipa":"/ˈæksɪdənt/"}],"note":"accident 指意外事故，incident 指一般事件。"},{"id":"g062","level":"初中","source":"人教/译林","words":[{"word":"loose","pos":"adj.","meaning":"松的","ipa":"/luːs/"},{"word":"lose","pos":"v.","meaning":"丢失；输","ipa":"/luːz/"},{"word":"loss","pos":"n.","meaning":"损失","ipa":"/lɒs/"},{"word":"lost","pos":"adj.","meaning":"丢失的","ipa":"/lɒst/"}],"note":"loose 是形容词“松的”，lose 是动词，loss 是名词，lost 是形容词/过去分词。"},{"id":"g063","level":"初中","source":"人教/译林","words":[{"word":"lone","pos":"adj.","meaning":"孤单的（定语）","ipa":"/ləʊn/"},{"word":"alone","pos":"adj./adv.","meaning":"独自","ipa":"/əˈləʊn/"},{"word":"lonely","pos":"adj.","meaning":"寂寞的","ipa":"/ˈləʊnli/"}],"note":"alone 表“独自”不表感情色彩，lonely 强调“孤独寂寞”。"},{"id":"g064","level":"初中","source":"人教/译林","words":[{"word":"passenger","pos":"n.","meaning":"乘客","ipa":"/ˈpæsɪndʒə(r)/"},{"word":"passage","pos":"n.","meaning":"通道；段落","ipa":"/ˈpæsɪdʒ/"}],"note":"passenger 是“乘客”，passage 是“通道/段落”，拼写相近。"},{"id":"g065","level":"初中","source":"人教/译林","words":[{"word":"pile","pos":"n.","meaning":"堆","ipa":"/paɪl/"},{"word":"pill","pos":"n.","meaning":"药丸","ipa":"/pɪl/"}],"note":"pile 是“堆”，pill 是“药丸”，差一个字母。"},{"id":"g066","level":"初中","source":"人教/译林","words":[{"word":"police","pos":"n.","meaning":"警察","ipa":"/pəˈliːs/"},{"word":"policy","pos":"n.","meaning":"政策","ipa":"/ˈpɒləsi/"},{"word":"politics","pos":"n.","meaning":"政治","ipa":"/ˈpɒlətɪks/"}],"note":"police 是“警察”，policy 是“政策”，politics 是“政治”。"},{"id":"g067","level":"初中","source":"人教/译林","words":[{"word":"principal","pos":"n./adj.","meaning":"校长；主要的","ipa":"/ˈprɪnsəpl/"},{"word":"principle","pos":"n.","meaning":"原则","ipa":"/ˈprɪnsəpl/"}],"note":"principal 可作“校长/主要的”，principle 只作名词“原则”。"},{"id":"g068","level":"初中","source":"人教/译林","words":[{"word":"rob","pos":"v.","meaning":"抢劫","ipa":"/rɒb/"},{"word":"rub","pos":"v.","meaning":"摩擦","ipa":"/rʌb/"}],"note":"rob 是“抢劫”，rub 是“摩擦”，元音不同。"},{"id":"g069","level":"初中","source":"人教/译林","words":[{"word":"sample","pos":"n.","meaning":"样本","ipa":"/ˈsɑːmpl/"},{"word":"simple","pos":"adj.","meaning":"简单的","ipa":"/ˈsɪmpl/"}],"note":"sample 是“样本”，simple 是“简单的”，字母顺序不同。"},{"id":"g070","level":"初中","source":"人教/译林","words":[{"word":"steal","pos":"v.","meaning":"偷","ipa":"/stiːl/"},{"word":"steel","pos":"n.","meaning":"钢铁","ipa":"/stiːl/"}],"note":"steal 是“偷”，steel 是“钢铁”，读音相同。"},{"id":"g071","level":"初中","source":"人教/译林","words":[{"word":"sweet","pos":"adj.","meaning":"甜的","ipa":"/swiːt/"},{"word":"sweat","pos":"n./v.","meaning":"汗水；出汗","ipa":"/swet/"}],"note":"sweet 是“甜的”，sweat 是“汗水”，ea 与 ee 互换。"},{"id":"g072","level":"初中","source":"人教/译林","words":[{"word":"temper","pos":"n.","meaning":"脾气","ipa":"/ˈtempə(r)/"},{"word":"temple","pos":"n.","meaning":"寺庙","ipa":"/ˈtempl/"}],"note":"temper 是“脾气”，temple 是“寺庙”，拼写相近。"},{"id":"g073","level":"初中","source":"人教/译林","words":[{"word":"trace","pos":"n./v.","meaning":"痕迹；追踪","ipa":"/treɪs/"},{"word":"track","pos":"n.","meaning":"轨道；跑道","ipa":"/træk/"},{"word":"trade","pos":"n./v.","meaning":"贸易","ipa":"/treɪd/"}],"note":"trace 表“痕迹”，track 表“轨道”，trade 表“贸易”。"},{"id":"g074","level":"初中","source":"人教/译林","words":[{"word":"trap","pos":"n./v.","meaning":"陷阱；困住","ipa":"/træp/"},{"word":"trip","pos":"n.","meaning":"旅行","ipa":"/trɪp/"}],"note":"trap 是“陷阱”，trip 是“旅行”，元音不同。"},{"id":"g075","level":"初中","source":"人教/译林","words":[{"word":"wander","pos":"v.","meaning":"闲逛","ipa":"/ˈwɒndə(r)/"},{"word":"wonder","pos":"v./n.","meaning":"想知道；惊奇","ipa":"/ˈwʌndə(r)/"}],"note":"wander 是“闲逛”，wonder 是“想知道/奇迹”，a 与 o 互换。"},{"id":"g076","level":"初中","source":"人教/译林","words":[{"word":"weep","pos":"v.","meaning":"哭泣","ipa":"/wiːp/"},{"word":"sweep","pos":"v.","meaning":"打扫","ipa":"/swiːp/"}],"note":"weep 是“哭泣”，sweep 是“打扫”，首字母不同。"},{"id":"g077","level":"初中","source":"人教/译林","words":[{"word":"wheat","pos":"n.","meaning":"小麦","ipa":"/wiːt/"},{"word":"weight","pos":"n.","meaning":"重量","ipa":"/weɪt/"}],"note":"wheat 是“小麦”，weight 是“重量”，拼写相近。"},{"id":"g078","level":"初中","source":"人教/译林","words":[{"word":"weather","pos":"n.","meaning":"天气","ipa":"/ˈweðə(r)/"},{"word":"whether","pos":"conj.","meaning":"是否","ipa":"/ˈweðə(r)/"}],"note":"weather 是“天气”，whether 是“是否”，读音相同。"},{"id":"g079","level":"初中","source":"人教/译林","words":[{"word":"quit","pos":"v.","meaning":"放弃；退出","ipa":"/kwɪt/"},{"word":"quite","pos":"adv.","meaning":"相当","ipa":"/kwaɪt/"}],"note":"quit 是动词“退出”，quite 是副词“相当”，拼写相近。"},{"id":"g080","level":"初中","source":"人教/译林","words":[{"word":"shade","pos":"n.","meaning":"阴凉处","ipa":"/ʃeɪd/"},{"word":"shadow","pos":"n.","meaning":"影子","ipa":"/ˈʃædəʊ/"}],"note":"shade 指遮挡阳光形成的阴凉处，shadow 指物体投射的影子。"},{"id":"g081","level":"初中","source":"人教/译林","words":[{"word":"sometime","pos":"adv.","meaning":"某时","ipa":"/ˈsʌmtaɪm/"},{"word":"sometimes","pos":"adv.","meaning":"有时","ipa":"/ˈsʌmtaɪmz/"},{"word":"some time","pos":"phr.","meaning":"一段时间","ipa":"/sʌm taɪm/"},{"word":"some times","pos":"phr.","meaning":"几次","ipa":"/sʌm taɪmz/"}],"note":"sometime 表“某时”，sometimes 表“有时”，some time 表“一段时间”，some times 表“几次”。"},{"id":"g082","level":"初中","source":"人教/译林","words":[{"word":"rent","pos":"n./v.","meaning":"租金；租","ipa":"/rent/"},{"word":"rest","pos":"n./v.","meaning":"休息","ipa":"/rest/"},{"word":"rust","pos":"n./v.","meaning":"生锈","ipa":"/rʌst/"}],"note":"rent 是“租”，rest 是“休息”，rust 是“生锈”，中间元音不同。"},{"id":"g083","level":"初中","source":"人教/译林","words":[{"word":"sock","pos":"n.","meaning":"短袜","ipa":"/sɒk/"},{"word":"stocking","pos":"n.","meaning":"长筒袜","ipa":"/ˈstɒkɪŋ/"}],"note":"sock 指短袜，stocking 指长筒袜。"},{"id":"g084","level":"初中","source":"人教/译林","words":[{"word":"beam","pos":"n.","meaning":"横梁；光束","ipa":"/biːm/"},{"word":"bean","pos":"n.","meaning":"豆子","ipa":"/biːn/"},{"word":"been","pos":"v.","meaning":"be 的过去分词","ipa":"/biːn/"}],"note":"beam 是“横梁/光束”，bean 是“豆子”，been 是 be 的过去分词，读音相近。"},{"id":"g085","level":"初中","source":"人教/译林","words":[{"word":"dine","pos":"v.","meaning":"用餐","ipa":"/daɪn/"},{"word":"diner","pos":"n.","meaning":"食客","ipa":"/ˈdaɪnə(r)/"},{"word":"dinner","pos":"n.","meaning":"晚餐","ipa":"/ˈdɪnə(r)/"}],"note":"dine 是动词“用餐”，diner 是“食客”，dinner 是“晚餐”。"},{"id":"g086","level":"初中","source":"人教/译林","words":[{"word":"flesh","pos":"n.","meaning":"肉","ipa":"/fleʃ/"},{"word":"fresh","pos":"adj.","meaning":"新鲜的","ipa":"/freʃ/"}],"note":"flesh 是“肉”，fresh 是“新鲜的”，拼写相近。"},{"id":"g087","level":"初中","source":"人教/译林","words":[{"word":"advice","pos":"n.","meaning":"建议","ipa":"/ədˈvaɪs/"},{"word":"advise","pos":"v.","meaning":"建议","ipa":"/ədˈvaɪz/"}],"note":"advice 是名词（不可数），advise 是动词，c 与 s 发音不同。"},{"id":"g088","level":"初中","source":"人教/译林","words":[{"word":"accept","pos":"v.","meaning":"接受","ipa":"/əkˈsept/"},{"word":"except","pos":"prep.","meaning":"除…之外","ipa":"/ɪkˈsept/"},{"word":"expect","pos":"v.","meaning":"期望","ipa":"/ɪkˈspekt/"}],"note":"accept 表“接受”，except 表“除…之外”，expect 表“期望”。"},{"id":"g089","level":"初中","source":"人教/译林","words":[{"word":"borrow","pos":"v.","meaning":"借入","ipa":"/ˈbɒrəʊ/"},{"word":"lend","pos":"v.","meaning":"借出","ipa":"/lend/"}],"note":"borrow 是“向别人借”，lend 是“借给别人”。"},{"id":"g090","level":"初中","source":"人教/译林","words":[{"word":"bring","pos":"v.","meaning":"带来","ipa":"/brɪŋ/"},{"word":"take","pos":"v.","meaning":"带走","ipa":"/teɪk/"},{"word":"carry","pos":"v.","meaning":"携带；搬运","ipa":"/ˈkæri/"},{"word":"fetch","pos":"v.","meaning":"去取来","ipa":"/fetʃ/"}],"note":"bring 朝说话人方向带，take 朝远离方向带，carry 表随身携带，fetch 表去取回。"},{"id":"g091","level":"初中","source":"人教/译林","words":[{"word":"spend","pos":"v.","meaning":"花费（人作主语）","ipa":"/spend/"},{"word":"cost","pos":"v.","meaning":"花费（物作主语）","ipa":"/kɒst/"},{"word":"take","pos":"v.","meaning":"花费（it 作主语）","ipa":"/teɪk/"},{"word":"pay","pos":"v.","meaning":"支付","ipa":"/peɪ/"}],"note":"spend 人作主语，cost 物作主语，take 常用 it takes 句型，pay 表付款。"},{"id":"g092","level":"初中","source":"人教/译林","words":[{"word":"lie","pos":"v.","meaning":"躺；说谎","ipa":"/laɪ/"},{"word":"lay","pos":"v.","meaning":"放置；下蛋","ipa":"/leɪ/"}],"note":"lie（躺）的过去式是 lay，lay（放置）的过去式是 laid。"},{"id":"g093","level":"初中","source":"人教/译林","words":[{"word":"receive","pos":"v.","meaning":"收到","ipa":"/rɪˈsiːv/"},{"word":"accept","pos":"v.","meaning":"接受","ipa":"/əkˈsept/"}],"note":"receive 只表示“收到”，accept 表示“接受/同意收下”。"},{"id":"g094","level":"初中","source":"人教/译林","words":[{"word":"win","pos":"v.","meaning":"赢（比赛）","ipa":"/wɪn/"},{"word":"beat","pos":"v.","meaning":"打败（对手）","ipa":"/biːt/"}],"note":"win 后接比赛/奖品，beat 后接人或队伍。"},{"id":"g095","level":"初中","source":"人教/译林","words":[{"word":"say","pos":"v.","meaning":"说（内容）","ipa":"/seɪ/"},{"word":"speak","pos":"v.","meaning":"说（语言）；发言","ipa":"/spiːk/"},{"word":"talk","pos":"v.","meaning":"交谈","ipa":"/tɔːk/"},{"word":"tell","pos":"v.","meaning":"告诉","ipa":"/tel/"}],"note":"say 强调说的内容，speak 强调说语言/发言，talk 强调交谈，tell 强调告诉某人。"},{"id":"g096","level":"初中","source":"人教/译林","words":[{"word":"arrive","pos":"v.","meaning":"到达","ipa":"/əˈraɪv/"},{"word":"reach","pos":"v.","meaning":"到达","ipa":"/riːtʃ/"},{"word":"get to","pos":"phr.","meaning":"到达","ipa":"/ɡet tuː/"}],"note":"arrive 接 in/at，reach 直接接地点，get to 用于口语。"},{"id":"g097","level":"初中","source":"人教/译林","words":[{"word":"join","pos":"v.","meaning":"加入（组织）","ipa":"/dʒɔɪn/"},{"word":"attend","pos":"v.","meaning":"出席","ipa":"/əˈtend/"},{"word":"take part in","pos":"phr.","meaning":"参加（活动）","ipa":"/teɪk pɑːt ɪn/"}],"note":"join 表加入组织/人群，attend 表出席，take part in 表参加活动。"},{"id":"g098","level":"初中","source":"人教/译林","words":[{"word":"hope","pos":"v./n.","meaning":"希望","ipa":"/həʊp/"},{"word":"wish","pos":"v./n.","meaning":"希望；祝愿","ipa":"/wɪʃ/"}],"note":"hope 表可实现愿望，wish 可表难以实现或虚拟的愿望，也可表祝愿。"},{"id":"g099","level":"初中","source":"人教/译林","words":[{"word":"find","pos":"v.","meaning":"找到","ipa":"/faɪnd/"},{"word":"look for","pos":"phr.","meaning":"寻找","ipa":"/lʊk fɔː(r)/"}],"note":"look for 强调寻找的过程，find 强调找到的结果。"},{"id":"g100","level":"初中","source":"人教/译林","words":[{"word":"real","pos":"adj.","meaning":"真实的（非假）","ipa":"/ˈrɪəl/"},{"word":"true","pos":"adj.","meaning":"真实的（符合事实）","ipa":"/truː/"}],"note":"real 强调“非虚构/非仿造”，true 强调“与事实相符”。"},{"id":"g101","level":"初中","source":"人教/译林","words":[{"word":"dead","pos":"adj.","meaning":"死的","ipa":"/ded/"},{"word":"death","pos":"n.","meaning":"死亡","ipa":"/deθ/"},{"word":"die","pos":"v.","meaning":"死","ipa":"/daɪ/"},{"word":"dying","pos":"adj.","meaning":"垂死的","ipa":"/ˈdaɪɪŋ/"}],"note":"dead 形容词，death 名词，die 动词，dying 是 die 的现在分词。"},{"id":"g102","level":"初中","source":"人教/译林","words":[{"word":"ill","pos":"adj.","meaning":"生病的","ipa":"/ɪl/"},{"word":"sick","pos":"adj.","meaning":"生病的；恶心的","ipa":"/sɪk/"}],"note":"ill 多作表语，sick 可作定语也可表“恶心”。"},{"id":"g103","level":"初中","source":"人教/译林","words":[{"word":"job","pos":"n.","meaning":"工作（可数）","ipa":"/dʒɒb/"},{"word":"work","pos":"n./v.","meaning":"工作（不可数）","ipa":"/wɜːk/"}],"note":"job 是可数名词，work 多作不可数名词或动词。"},{"id":"g104","level":"初中","source":"人教/译林","words":[{"word":"journey","pos":"n.","meaning":"旅程","ipa":"/ˈdʒɜːni/"},{"word":"trip","pos":"n.","meaning":"旅行（短途）","ipa":"/trɪp/"},{"word":"travel","pos":"n./v.","meaning":"旅行（泛指）","ipa":"/ˈtrævl/"}],"note":"trip 多指短途，journey 多指较远行程，travel 是泛指。"},{"id":"g105","level":"初中","source":"人教/译林","words":[{"word":"problem","pos":"n.","meaning":"问题（难解决）","ipa":"/ˈprɒbləm/"},{"word":"question","pos":"n.","meaning":"问题（待回答）","ipa":"/ˈkwestʃən/"}],"note":"problem 侧重需要解决的问题，question 侧重等待回答的问题。"},{"id":"g106","level":"初中","source":"人教/译林","words":[{"word":"sound","pos":"n.","meaning":"声音（泛指）","ipa":"/saʊnd/"},{"word":"noise","pos":"n.","meaning":"噪音","ipa":"/nɔɪz/"},{"word":"voice","pos":"n.","meaning":"嗓音","ipa":"/vɔɪs/"}],"note":"sound 泛指一切声音，noise 指噪音，voice 指人的嗓音。"},{"id":"g107","level":"初中","source":"人教/译林","words":[{"word":"road","pos":"n.","meaning":"道路","ipa":"/rəʊd/"},{"word":"street","pos":"n.","meaning":"街道","ipa":"/striːt/"},{"word":"way","pos":"n.","meaning":"路；方法","ipa":"/weɪ/"}],"note":"road 指公路/道路，street 指城市街道，way 泛指路线或方法。"},{"id":"g108","level":"初中","source":"人教/译林","words":[{"word":"between","pos":"prep.","meaning":"在两者之间","ipa":"/bɪˈtwiːn/"},{"word":"among","pos":"prep.","meaning":"在三者及以上之间","ipa":"/əˈmʌŋ/"}],"note":"between 用于两者，among 用于三者及以上。"},{"id":"g109","level":"初中","source":"人教/译林","words":[{"word":"other","pos":"adj.","meaning":"其他的","ipa":"/ˈʌðə(r)/"},{"word":"another","pos":"pron./adj.","meaning":"另一个","ipa":"/əˈnʌðə(r)/"},{"word":"the other","pos":"phr.","meaning":"两者中的另一个","ipa":"/ðiː ˈʌðə(r)/"},{"word":"others","pos":"pron.","meaning":"其他人/物","ipa":"/ˈʌðəz/"}],"note":"another 表“另一个”，the other 表两者中剩下的那个，others 泛指其他的人或物。"},{"id":"g110","level":"初中","source":"人教/译林","words":[{"word":"each","pos":"adj./pron.","meaning":"每个（强调个体）","ipa":"/iːtʃ/"},{"word":"every","pos":"adj.","meaning":"每个（强调整体）","ipa":"/ˈevri/"}],"note":"each 强调个体，every 强调整体；every 不能单独作主语。"},{"id":"g111","level":"初中","source":"人教/译林","words":[{"word":"excited","pos":"adj.","meaning":"兴奋的（人）","ipa":"/ɪkˈsaɪtɪd/"},{"word":"exciting","pos":"adj.","meaning":"令人兴奋的（物）","ipa":"/ɪkˈsaɪtɪŋ/"}],"note":"-ed 形容人的感受，-ing 形容事物本身的特征。"},{"id":"g112","level":"初中","source":"人教/译林","words":[{"word":"bored","pos":"adj.","meaning":"无聊的（人）","ipa":"/bɔːd/"},{"word":"boring","pos":"adj.","meaning":"令人无聊的（物）","ipa":"/ˈbɔːrɪŋ/"}],"note":"-ed 形容人的感受，-ing 形容事物本身的特征。"},{"id":"g113","level":"初中","source":"人教/译林","words":[{"word":"hard","pos":"adj./adv.","meaning":"困难的；努力地","ipa":"/hɑːd/"},{"word":"hardly","pos":"adv.","meaning":"几乎不","ipa":"/ˈhɑːdli/"}],"note":"hard 可作“困难/努力”，hardly 是“几乎不”，含否定意义。"},{"id":"g114","level":"初中","source":"人教/译林","words":[{"word":"maybe","pos":"adv.","meaning":"也许","ipa":"/ˈmeɪbi/"},{"word":"may be","pos":"phr.","meaning":"可能是（may + be）","ipa":"/meɪ biː/"}],"note":"maybe 是副词，may be 是情态动词加 be 构成的谓语。"},{"id":"g115","level":"初中","source":"人教/译林","words":[{"word":"everyday","pos":"adj.","meaning":"日常的","ipa":"/ˈevrideɪ/"},{"word":"every day","pos":"phr.","meaning":"每天","ipa":"/ˈevri deɪ/"}],"note":"everyday 是形容词作定语，every day 是副词短语作状语。"},{"id":"g116","level":"初中","source":"人教/译林","words":[{"word":"past","pos":"prep./n./adj.","meaning":"经过；过去","ipa":"/pɑːst/"},{"word":"passed","pos":"v.","meaning":"pass 的过去式","ipa":"/pɑːst/"}],"note":"past 是介词/名词/形容词，passed 是动词 pass 的过去式。"},{"id":"g117","level":"初中","source":"人教/译林","words":[{"word":"also","pos":"adv.","meaning":"也（肯定句）","ipa":"/ˈɔːlsəʊ/"},{"word":"too","pos":"adv.","meaning":"也（肯定句，句末）","ipa":"/tuː/"},{"word":"either","pos":"adv.","meaning":"也（否定句）","ipa":"/ˈaɪðə(r)/"}],"note":"also 多用于句中，too 用于肯定句句末，either 用于否定句句末。"},{"id":"g118","level":"初中","source":"人教/译林","words":[{"word":"such","pos":"adj.","meaning":"这样的","ipa":"/sʌtʃ/"},{"word":"so","pos":"adv.","meaning":"如此","ipa":"/səʊ/"}],"note":"such 修饰名词（such a book），so 修饰形容词/副词（so good）。"},{"id":"g119","level":"初中","source":"人教/译林","words":[{"word":"because","pos":"conj.","meaning":"因为（接从句）","ipa":"/bɪˈkɒz/"},{"word":"because of","pos":"phr.","meaning":"因为（接名词）","ipa":"/bɪˈkɒz əv/"}],"note":"because 后接句子，because of 后接名词/代词。"},{"id":"g120","level":"初中","source":"人教/译林","words":[{"word":"in front of","pos":"phr.","meaning":"在…前面（外部）","ipa":"/ɪn frʌnt əv/"},{"word":"in the front of","pos":"phr.","meaning":"在…前部（内部）","ipa":"/ɪn ðə frʌnt əv/"}],"note":"in front of 指外部前方，in the front of 指内部前部。"},{"id":"g121","level":"初中","source":"人教/译林","words":[{"word":"a few","pos":"phr.","meaning":"几个（可数）","ipa":"/ə fjuː/"},{"word":"few","pos":"adj./pron.","meaning":"几乎没有（可数）","ipa":"/fjuː/"},{"word":"a little","pos":"phr.","meaning":"一点（不可数）","ipa":"/ə ˈlɪtl/"},{"word":"little","pos":"adj./pron.","meaning":"几乎没有（不可数）","ipa":"/ˈlɪtl/"}],"note":"有 a 表肯定“有一些”，无 a 表否定“几乎没有”；few 接可数，little 接不可数。"},{"id":"g122","level":"初中","source":"人教/译林","words":[{"word":"too many","pos":"phr.","meaning":"太多（可数）","ipa":"/tuː ˈmeni/"},{"word":"too much","pos":"phr.","meaning":"太多（不可数）","ipa":"/tuː mʌtʃ/"},{"word":"much too","pos":"phr.","meaning":"太（修饰形容词）","ipa":"/mʌtʃ tuː/"}],"note":"too many 接可数名词，too much 接不可数名词，much too 修饰形容词/副词。"},{"id":"g123","level":"初中","source":"人教/译林","words":[{"word":"wear","pos":"v.","meaning":"穿着（状态）","ipa":"/weə(r)/"},{"word":"put on","pos":"phr.","meaning":"穿上（动作）","ipa":"/pʊt ɒn/"},{"word":"dress","pos":"v.","meaning":"给…穿衣","ipa":"/dres/"}],"note":"wear 表穿着状态，put on 表穿的动作，dress 后接人（dress oneself）。"},{"id":"g124","level":"初中","source":"人教/译林","words":[{"word":"discover","pos":"v.","meaning":"发现（已存在）","ipa":"/dɪˈskʌvə(r)/"},{"word":"invent","pos":"v.","meaning":"发明（新事物）","ipa":"/ɪnˈvent/"}],"note":"discover 是发现原本存在的事物，invent 是发明原本没有的东西。"},{"id":"g125","level":"初中","source":"人教/译林","words":[{"word":"learn","pos":"v.","meaning":"学习（技能）","ipa":"/lɜːn/"},{"word":"study","pos":"v.","meaning":"学习；研究","ipa":"/ˈstʌdi/"}],"note":"learn 侧重获得知识与技能，study 侧重学习研究的过程。"},{"id":"g126","level":"初中","source":"人教/译林","words":[{"word":"miss","pos":"v.","meaning":"错过；想念","ipa":"/mɪs/"},{"word":"lose","pos":"v.","meaning":"丢失；输","ipa":"/luːz/"}],"note":"miss 表“错过/想念”，lose 表“丢失/失败”。"},{"id":"g127","level":"初中","source":"人教/译林","words":[{"word":"forget","pos":"v.","meaning":"忘记","ipa":"/fəˈɡet/"},{"word":"leave","pos":"v.","meaning":"离开；落下","ipa":"/liːv/"}],"note":"表示“忘带某物”常用 leave sth. 在某地，不用 forget。"},{"id":"g128","level":"初中","source":"人教/译林","words":[{"word":"remember","pos":"v.","meaning":"记得","ipa":"/rɪˈmembə(r)/"},{"word":"remind","pos":"v.","meaning":"提醒","ipa":"/rɪˈmaɪnd/"}],"note":"remember 是“记得”，remind 是“提醒某人做某事”。"},{"id":"g129","level":"初中","source":"人教/译林","words":[{"word":"steal","pos":"v.","meaning":"偷（物）","ipa":"/stiːl/"},{"word":"rob","pos":"v.","meaning":"抢（人/场所）","ipa":"/rɒb/"}],"note":"steal sth. from sb. 偷东西，rob sb. of sth. 抢某人的东西。"},{"id":"g130","level":"初中","source":"人教/译林","words":[{"word":"mark","pos":"n.","meaning":"记号；分数","ipa":"/mɑːk/"},{"word":"sign","pos":"n.","meaning":"标志；迹象","ipa":"/saɪn/"},{"word":"symbol","pos":"n.","meaning":"象征；符号","ipa":"/ˈsɪmbl/"}],"note":"mark 是“记号/分数”，sign 是“标志/迹象”，symbol 是“象征/符号”。"},{"id":"g131","level":"初中","source":"人教/译林","words":[{"word":"opportunity","pos":"n.","meaning":"机会","ipa":"/ˌɒpəˈtjuːnəti/"},{"word":"chance","pos":"n.","meaning":"机会；可能性","ipa":"/tʃɑːns/"}],"note":"opportunity 侧重好时机，chance 更口语化，也可表“可能性”。"},{"id":"g132","level":"初中","source":"人教/译林","words":[{"word":"popular","pos":"adj.","meaning":"受欢迎的","ipa":"/ˈpɒpjələ(r)/"},{"word":"population","pos":"n.","meaning":"人口","ipa":"/ˌpɒpjuˈleɪʃn/"}],"note":"popular 是形容词“受欢迎的”，population 是名词“人口”。"},{"id":"g133","level":"初中","source":"人教/译林","words":[{"word":"prize","pos":"n.","meaning":"奖品","ipa":"/praɪz/"},{"word":"price","pos":"n.","meaning":"价格","ipa":"/praɪs/"},{"word":"pride","pos":"n.","meaning":"自豪","ipa":"/praɪd/"}],"note":"prize 是“奖品”，price 是“价格”，pride 是“自豪”。"},{"id":"g134","level":"初中","source":"人教/译林","words":[{"word":"permit","pos":"v.","meaning":"允许（正式）","ipa":"/pəˈmɪt/"},{"word":"allow","pos":"v.","meaning":"允许","ipa":"/əˈlaʊ/"},{"word":"let","pos":"v.","meaning":"让（最口语）","ipa":"/let/"}],"note":"permit 较正式，allow 常用，let 后接不带 to 的不定式。"},{"id":"g135","level":"初中","source":"人教/译林","words":[{"word":"prevent","pos":"v.","meaning":"阻止","ipa":"/prɪˈvent/"},{"word":"avoid","pos":"v.","meaning":"避免","ipa":"/əˈvɔɪd/"}],"note":"prevent 是“阻止某事发生”，avoid 是“避免做某事”。"},{"id":"g136","level":"初中","source":"人教/译林","words":[{"word":"recognize","pos":"v.","meaning":"认出","ipa":"/ˈrekəɡnaɪz/"},{"word":"realize","pos":"v.","meaning":"意识到；实现","ipa":"/ˈrɪəlaɪz/"}],"note":"recognize 是“认出”，realize 是“意识到/实现”。"},{"id":"g137","level":"初中","source":"人教/译林","words":[{"word":"weather","pos":"n.","meaning":"天气","ipa":"/ˈweðə(r)/"},{"word":"climate","pos":"n.","meaning":"气候","ipa":"/ˈklaɪmət/"}],"note":"weather 指短时天气，climate 指长期气候。"},{"id":"g138","level":"初中","source":"人教/译林","words":[{"word":"across","pos":"prep.","meaning":"穿过（表面）","ipa":"/əˈkrɒs/"},{"word":"through","pos":"prep.","meaning":"穿过（内部）","ipa":"/θruː/"},{"word":"cross","pos":"v.","meaning":"横穿","ipa":"/krɒs/"},{"word":"past","pos":"prep.","meaning":"经过","ipa":"/pɑːst/"}],"note":"across 指从表面穿过，through 指从内部穿过，cross 是动词，past 指从旁边经过。"},{"id":"g139","level":"初中","source":"人教/译林","words":[{"word":"check","pos":"v.","meaning":"检查（核对）","ipa":"/tʃek/"},{"word":"examine","pos":"v.","meaning":"检查；考试","ipa":"/ɪɡˈzæmɪn/"}],"note":"check 多指核对，examine 多指仔细检查或考试。"},{"id":"g140","level":"初中","source":"人教/译林","words":[{"word":"cloth","pos":"n.","meaning":"布料","ipa":"/klɒθ/"},{"word":"clothes","pos":"n.","meaning":"衣服（复数）","ipa":"/kləʊðz/"},{"word":"clothing","pos":"n.","meaning":"服装（总称）","ipa":"/ˈkləʊðɪŋ/"}],"note":"cloth 是“布料”，clothes 是“衣服”，clothing 是服装总称。"},{"id":"g141","level":"高中","source":"其他教材","words":[{"word":"affect","pos":"v.","meaning":"影响","ipa":"/əˈfekt/"},{"word":"effect","pos":"n.","meaning":"结果；影响","ipa":"/ɪˈfekt/"}],"note":"affect 是动词，effect 是名词；have an effect on 表“对…有影响”。"},{"id":"g142","level":"高中","source":"其他教材","words":[{"word":"assure","pos":"v.","meaning":"使确信","ipa":"/əˈʃʊə(r)/"},{"word":"ensure","pos":"v.","meaning":"确保","ipa":"/ɪnˈʃʊə(r)/"},{"word":"insure","pos":"v.","meaning":"投保","ipa":"/ɪnˈʃʊə(r)/"}],"note":"assure 表“向某人保证”，ensure 表“确保”，insure 表“投保”。"},{"id":"g143","level":"高中","source":"其他教材","words":[{"word":"arise","pos":"v.","meaning":"出现（问题）","ipa":"/əˈraɪz/"},{"word":"arouse","pos":"v.","meaning":"唤起","ipa":"/əˈraʊz/"},{"word":"rise","pos":"v.","meaning":"上升","ipa":"/raɪz/"},{"word":"raise","pos":"v.","meaning":"举起；抚养","ipa":"/reɪz/"}],"note":"arise/rise 是不及物，raise 是及物，arouse 表“唤起（情绪）”。"},{"id":"g144","level":"高中","source":"其他教材","words":[{"word":"berry","pos":"n.","meaning":"浆果","ipa":"/ˈberi/"},{"word":"bury","pos":"v.","meaning":"埋葬","ipa":"/ˈberi/"}],"note":"berry 是“浆果”，bury 是“埋葬”，拼写相近。"},{"id":"g145","level":"高中","source":"其他教材","words":[{"word":"border","pos":"n.","meaning":"边界","ipa":"/ˈbɔːdə(r)/"},{"word":"board","pos":"n.","meaning":"木板；登机","ipa":"/bɔːd/"}],"note":"border 是“边界”，board 是“木板/登机”。"},{"id":"g146","level":"高中","source":"其他教材","words":[{"word":"boom","pos":"n./v.","meaning":"繁荣","ipa":"/buːm/"},{"word":"bloom","pos":"v./n.","meaning":"开花","ipa":"/bluːm/"}],"note":"boom 是“繁荣/轰鸣”，bloom 是“开花”。"},{"id":"g147","level":"高中","source":"其他教材","words":[{"word":"cite","pos":"v.","meaning":"引用","ipa":"/saɪt/"},{"word":"site","pos":"n.","meaning":"场所","ipa":"/saɪt/"},{"word":"sight","pos":"n.","meaning":"视觉；景象","ipa":"/saɪt/"}],"note":"cite 是“引用”，site 是“地点”，sight 是“视觉/景象”，读音相同。"},{"id":"g148","level":"高中","source":"其他教材","words":[{"word":"clash","pos":"n./v.","meaning":"冲突；撞击声","ipa":"/klæʃ/"},{"word":"crash","pos":"v./n.","meaning":"碰撞；坠毁","ipa":"/kræʃ/"},{"word":"crush","pos":"v.","meaning":"压坏","ipa":"/krʌʃ/"}],"note":"clash 表冲突/金属撞击，crash 表碰撞/坠毁，crush 表压碎。"},{"id":"g149","level":"高中","source":"其他教材","words":[{"word":"considerate","pos":"adj.","meaning":"体贴的","ipa":"/kənˈsɪdərət/"},{"word":"considerable","pos":"adj.","meaning":"大量的","ipa":"/kənˈsɪdərəbl/"}],"note":"considerate 是“体贴的”，considerable 是“相当大的/多的”。"},{"id":"g150","level":"高中","source":"其他教材","words":[{"word":"consist","pos":"v.","meaning":"组成","ipa":"/kənˈsɪst/"},{"word":"persist","pos":"v.","meaning":"坚持","ipa":"/pəˈsɪst/"},{"word":"insist","pos":"v.","meaning":"坚持主张","ipa":"/ɪnˈsɪst/"},{"word":"resist","pos":"v.","meaning":"抵抗","ipa":"/rɪˈzɪst/"}],"note":"consist 表“由…组成”，persist 表坚持（持续），insist 表坚持主张，resist 表抵抗。"},{"id":"g151","level":"高中","source":"其他教材","words":[{"word":"costume","pos":"n.","meaning":"服装","ipa":"/ˈkɒstjuːm/"},{"word":"custom","pos":"n.","meaning":"习俗","ipa":"/ˈkʌstəm/"},{"word":"customer","pos":"n.","meaning":"顾客","ipa":"/ˈkʌstəmə(r)/"}],"note":"costume 是“戏服/服装”，custom 是“习俗”，customer 是“顾客”。"},{"id":"g152","level":"高中","source":"其他教材","words":[{"word":"drawn","pos":"v.","meaning":"draw 的过去分词","ipa":"/drɔːn/"},{"word":"drown","pos":"v.","meaning":"溺水","ipa":"/draʊn/"}],"note":"drawn 是 draw 的过去分词，drown 是“溺水”。"},{"id":"g153","level":"高中","source":"其他教材","words":[{"word":"economic","pos":"adj.","meaning":"经济的","ipa":"/ˌiːkəˈnɒmɪk/"},{"word":"economical","pos":"adj.","meaning":"节俭的","ipa":"/ˌiːkəˈnɒmɪkl/"}],"note":"economic 与“经济”有关，economical 表“省钱/节约的”。"},{"id":"g154","level":"高中","source":"其他教材","words":[{"word":"effective","pos":"adj.","meaning":"有效的","ipa":"/ɪˈfektɪv/"},{"word":"efficient","pos":"adj.","meaning":"高效的","ipa":"/ɪˈfɪʃnt/"}],"note":"effective 强调有效果，efficient 强调效率高。"},{"id":"g155","level":"高中","source":"其他教材","words":[{"word":"emigrate","pos":"v.","meaning":"移居出境","ipa":"/ˈemɪɡreɪt/"},{"word":"immigrate","pos":"v.","meaning":"移居入境","ipa":"/ˈɪmɪɡreɪt/"},{"word":"migrate","pos":"v.","meaning":"迁徙","ipa":"/maɪˈɡreɪt/"}],"note":"e- 表“出去”，im- 表“进来”，migrate 泛指迁徙。"},{"id":"g156","level":"高中","source":"其他教材","words":[{"word":"expect","pos":"v.","meaning":"期望","ipa":"/ɪkˈspekt/"},{"word":"respect","pos":"v./n.","meaning":"尊敬","ipa":"/rɪˈspekt/"},{"word":"aspect","pos":"n.","meaning":"方面","ipa":"/ˈæspekt/"},{"word":"inspect","pos":"v.","meaning":"视察","ipa":"/ɪnˈspekt/"},{"word":"suspect","pos":"v.","meaning":"怀疑","ipa":"/səˈspekt/"}],"note":"首字母决定词义：ex-期待，re-尊敬，a-方面，in-检查，sus-怀疑。"},{"id":"g157","level":"高中","source":"其他教材","words":[{"word":"fair","pos":"adj.","meaning":"公平的","ipa":"/feə(r)/"},{"word":"fare","pos":"n.","meaning":"车费","ipa":"/feə(r)/"}],"note":"fair 是“公平的”，fare 是“车费/票价”，读音相同。"},{"id":"g158","level":"高中","source":"其他教材","words":[{"word":"formal","pos":"adj.","meaning":"正式的","ipa":"/ˈfɔːml/"},{"word":"former","pos":"adj.","meaning":"前者的","ipa":"/ˈfɔːmə(r)/"}],"note":"formal 是“正式的”，former 是“前者/先前的”。"},{"id":"g159","level":"高中","source":"其他教材","words":[{"word":"glide","pos":"v.","meaning":"滑翔","ipa":"/ɡlaɪd/"},{"word":"slide","pos":"v.","meaning":"滑行","ipa":"/slaɪd/"},{"word":"slip","pos":"v.","meaning":"滑倒","ipa":"/slɪp/"}],"note":"glide 指平滑滑翔，slide 指沿表面滑行，slip 指意外滑倒。"},{"id":"g160","level":"高中","source":"其他教材","words":[{"word":"grant","pos":"v./n.","meaning":"授予；拨款","ipa":"/ɡrɑːnt/"},{"word":"grand","pos":"adj.","meaning":"宏伟的","ipa":"/ɡrænd/"}],"note":"grant 是“授予/拨款”，grand 是“宏伟的”，拼写相近。"},{"id":"g161","level":"高中","source":"其他教材","words":[{"word":"historic","pos":"adj.","meaning":"有历史意义的","ipa":"/hɪˈstɒrɪk/"},{"word":"historical","pos":"adj.","meaning":"历史的","ipa":"/hɪˈstɒrɪkl/"}],"note":"historic 表“具有历史意义的”，historical 表“与历史有关的”。"},{"id":"g162","level":"高中","source":"其他教材","words":[{"word":"imply","pos":"v.","meaning":"暗示","ipa":"/ɪmˈplaɪ/"},{"word":"infer","pos":"v.","meaning":"推断","ipa":"/ɪnˈfɜː(r)/"}],"note":"说话人 imply（暗示），听话人 infer（推断）。"},{"id":"g163","level":"高中","source":"其他教材","words":[{"word":"invaluable","pos":"adj.","meaning":"无价的","ipa":"/ɪnˈvæljuəbl/"},{"word":"valuable","pos":"adj.","meaning":"贵重的","ipa":"/ˈvæljuəbl/"},{"word":"valueless","pos":"adj.","meaning":"无价值的","ipa":"/ˈvæljuːləs/"}],"note":"invaluable 表“极宝贵的”，valuable 表“贵重的”，valueless 表“无价值的”。"},{"id":"g164","level":"高中","source":"其他教材","words":[{"word":"inability","pos":"n.","meaning":"无能力","ipa":"/ˌɪnəˈbɪləti/"},{"word":"disability","pos":"n.","meaning":"残疾","ipa":"/ˌdɪsəˈbɪləti/"}],"note":"inability 指“无能力”，disability 指“残疾/障碍”。"},{"id":"g165","level":"高中","source":"其他教材","words":[{"word":"later","pos":"adv.","meaning":"后来","ipa":"/ˈleɪtə(r)/"},{"word":"latter","pos":"adj.","meaning":"后者","ipa":"/ˈlætə(r)/"},{"word":"latest","pos":"adj.","meaning":"最新的","ipa":"/ˈleɪtɪst/"},{"word":"lately","pos":"adv.","meaning":"最近","ipa":"/ˈleɪtli/"}],"note":"later 表“后来”，latter 表“后者”，latest 表“最新的”，lately 表“最近”。"},{"id":"g166","level":"高中","source":"其他教材","words":[{"word":"minor","pos":"adj.","meaning":"次要的","ipa":"/ˈmaɪnə(r)/"},{"word":"minute","pos":"n./adj.","meaning":"分钟；微小的","ipa":"/ˈmɪnɪt/"},{"word":"mirror","pos":"n.","meaning":"镜子","ipa":"/ˈmɪrə(r)/"}],"note":"minor 是“次要的”，minute 是“分钟/微小的”，mirror 是“镜子”。"},{"id":"g167","level":"高中","source":"其他教材","words":[{"word":"oppose","pos":"v.","meaning":"反对","ipa":"/əˈpəʊz/"},{"word":"propose","pos":"v.","meaning":"提议","ipa":"/prəˈpəʊz/"},{"word":"suppose","pos":"v.","meaning":"假设","ipa":"/səˈpəʊz/"}],"note":"op-表“反对”，pro-表“提出”，sup-表“假定”。"},{"id":"g168","level":"高中","source":"其他教材","words":[{"word":"pat","pos":"v.","meaning":"轻拍","ipa":"/pæt/"},{"word":"tap","pos":"v.","meaning":"轻敲","ipa":"/tæp/"},{"word":"slap","pos":"v.","meaning":"掌掴","ipa":"/slæp/"},{"word":"rap","pos":"v.","meaning":"敲击","ipa":"/ræp/"}],"note":"pat 轻拍（抚摸），tap 轻敲，slap 掌击，rap 快速敲击。"},{"id":"g169","level":"高中","source":"其他教材","words":[{"word":"pray","pos":"v.","meaning":"祈祷","ipa":"/preɪ/"},{"word":"prey","pos":"n.","meaning":"猎物","ipa":"/preɪ/"}],"note":"pray 是“祈祷”，prey 是“猎物”，拼写相近。"},{"id":"g170","level":"高中","source":"其他教材","words":[{"word":"precious","pos":"adj.","meaning":"珍贵的","ipa":"/ˈpreʃəs/"},{"word":"previous","pos":"adj.","meaning":"先前的","ipa":"/ˈpriːviəs/"}],"note":"precious 是“珍贵的”，previous 是“先前的”。"},{"id":"g171","level":"高中","source":"其他教材","words":[{"word":"purpose","pos":"n.","meaning":"目的","ipa":"/ˈpɜːpəs/"},{"word":"suppose","pos":"v.","meaning":"假设","ipa":"/səˈpəʊz/"},{"word":"propose","pos":"v.","meaning":"建议","ipa":"/prəˈpəʊz/"}],"note":"purpose 是名词“目的”，suppose/propose 是动词，词尾不同。"},{"id":"g172","level":"高中","source":"其他教材","words":[{"word":"revenge","pos":"n./v.","meaning":"报仇","ipa":"/rɪˈvendʒ/"},{"word":"avenge","pos":"v.","meaning":"复仇","ipa":"/əˈvendʒ/"}],"note":"avenge 多为正义复仇，revenge 多指私人报复，且 revenge 常作名词。"},{"id":"g173","level":"高中","source":"其他教材","words":[{"word":"rural","pos":"adj.","meaning":"乡村的","ipa":"/ˈrʊərəl/"},{"word":"royal","pos":"adj.","meaning":"皇家的","ipa":"/ˈrɔɪəl/"}],"note":"rural 是“乡村的”，royal 是“皇家的”，拼写相近。"},{"id":"g174","level":"高中","source":"其他教材","words":[{"word":"scarce","pos":"adj.","meaning":"稀少的","ipa":"/skeəs/"},{"word":"scare","pos":"v.","meaning":"惊吓","ipa":"/skeə(r)/"}],"note":"scarce 是“稀少的”，scare 是“惊吓”，拼写相近。"},{"id":"g175","level":"高中","source":"其他教材","words":[{"word":"straight","pos":"adj./adv.","meaning":"直的","ipa":"/streɪt/"},{"word":"stray","pos":"v./adj.","meaning":"走失","ipa":"/streɪ/"}],"note":"straight 是“直的”，stray 是“走失的/流浪”。"},{"id":"g176","level":"高中","source":"其他教材","words":[{"word":"strike","pos":"v.","meaning":"击打","ipa":"/straɪk/"},{"word":"stick","pos":"v./n.","meaning":"粘贴；棍","ipa":"/stɪk/"},{"word":"strict","pos":"adj.","meaning":"严格的","ipa":"/strɪkt/"}],"note":"strike 表“击打”，stick 表“粘贴/棍”，strict 表“严格的”。"},{"id":"g177","level":"高中","source":"其他教材","words":[{"word":"stripe","pos":"n.","meaning":"条纹","ipa":"/straɪp/"},{"word":"strip","pos":"n./v.","meaning":"条带；剥去","ipa":"/strɪp/"},{"word":"trip","pos":"n.","meaning":"旅行","ipa":"/trɪp/"}],"note":"stripe 是“条纹”，strip 是“条带”，trip 是“旅行”。"},{"id":"g178","level":"高中","source":"其他教材","words":[{"word":"thorough","pos":"adj.","meaning":"彻底的","ipa":"/ˈθʌrə/"},{"word":"through","pos":"prep.","meaning":"通过","ipa":"/θruː/"},{"word":"though","pos":"conj.","meaning":"尽管","ipa":"/ðəʊ/"},{"word":"thought","pos":"n.","meaning":"想法","ipa":"/θɔːt/"}],"note":"thorough 是形容词“彻底的”，through 是介词，though 是连词，thought 是名词。"},{"id":"g179","level":"高中","source":"其他教材","words":[{"word":"yield","pos":"v./n.","meaning":"产出；屈服","ipa":"/jiːld/"},{"word":"field","pos":"n.","meaning":"田地","ipa":"/fiːld/"}],"note":"yield 表“产出/屈服”，field 表“田地”，拼写相近。"},{"id":"g180","level":"高中","source":"其他教材","words":[{"word":"besides","pos":"prep.","meaning":"除…之外（还有）","ipa":"/bɪˈsaɪdz/"},{"word":"except","pos":"prep.","meaning":"除…之外（没有）","ipa":"/ɪkˈsept/"},{"word":"except for","pos":"phr.","meaning":"除了…（整体评价）","ipa":"/ɪkˈsept fɔː(r)/"}],"note":"besides 表“包括在内”，except 表“排除在外”，except for 用于对整体的补充说明。"},{"id":"g181","level":"高中","source":"其他教材","words":[{"word":"continual","pos":"adj.","meaning":"连续的（有间断）","ipa":"/kənˈtɪnjuəl/"},{"word":"continuous","pos":"adj.","meaning":"连续的（不间断）","ipa":"/kənˈtɪnjuəs/"}],"note":"continual 有间歇的反复，continuous 不间断持续。"},{"id":"g182","level":"高中","source":"其他教材","words":[{"word":"electric","pos":"adj.","meaning":"电的（带电）","ipa":"/ɪˈlektrɪk/"},{"word":"electrical","pos":"adj.","meaning":"电气的（有关电）","ipa":"/ɪˈlektrɪkl/"},{"word":"electronic","pos":"adj.","meaning":"电子的","ipa":"/ɪˌlekˈtrɒnɪk/"}],"note":"electric 指用电驱动的，electrical 指与电气相关的，electronic 指电子设备。"},{"id":"g183","level":"高中","source":"其他教材","words":[{"word":"classic","pos":"adj./n.","meaning":"经典的","ipa":"/ˈklæsɪk/"},{"word":"classical","pos":"adj.","meaning":"古典的","ipa":"/ˈklæsɪkl/"}],"note":"classic 表“经典的/一流的”，classical 表“古典的（音乐/文学）”。"},{"id":"g184","level":"高中","source":"其他教材","words":[{"word":"possible","pos":"adj.","meaning":"可能的","ipa":"/ˈpɒsəbl/"},{"word":"probable","pos":"adj.","meaning":"很可能","ipa":"/ˈprɒbəbl/"},{"word":"likely","pos":"adj.","meaning":"可能的","ipa":"/ˈlaɪkli/"}],"note":"possible 可能性较低，probable 可能性高，likely 主语可为人。"},{"id":"g185","level":"高中","source":"其他教材","words":[{"word":"special","pos":"adj.","meaning":"特别的；专门的","ipa":"/ˈspeʃl/"},{"word":"particular","pos":"adj.","meaning":"特定的；讲究的","ipa":"/pəˈtɪkjələ(r)/"}],"note":"special 表“特别的”，particular 表“特定的/挑剔的”。"},{"id":"g186","level":"高中","source":"其他教材","words":[{"word":"award","pos":"n./v.","meaning":"奖品；授予","ipa":"/əˈwɔːd/"},{"word":"reward","pos":"n./v.","meaning":"报酬；奖赏","ipa":"/rɪˈwɔːd/"}],"note":"award 是评定的“奖品/授予”，reward 是付出的“酬劳/回报”。"},{"id":"g187","level":"高中","source":"其他教材","words":[{"word":"ban","pos":"v./n.","meaning":"禁止","ipa":"/bæn/"},{"word":"forbid","pos":"v.","meaning":"禁止","ipa":"/fəˈbɪd/"},{"word":"prohibit","pos":"v.","meaning":"禁止（正式）","ipa":"/prəˈhɪbɪt/"}],"note":"ban 常指官方明令禁止，forbid 指个人禁止，prohibit 较正式。"},{"id":"g188","level":"高中","source":"其他教材","words":[{"word":"cause","pos":"n./v.","meaning":"原因；导致","ipa":"/kɔːz/"},{"word":"reason","pos":"n.","meaning":"理由","ipa":"/ˈriːzn/"}],"note":"cause 是导致结果的“原因”，reason 是解释说明的“理由”。"},{"id":"g189","level":"高中","source":"其他教材","words":[{"word":"convince","pos":"v.","meaning":"使信服","ipa":"/kənˈvɪns/"},{"word":"persuade","pos":"v.","meaning":"说服","ipa":"/pəˈsweɪd/"}],"note":"convince 强调“使相信”，persuade 强调“劝动去做”。"},{"id":"g190","level":"高中","source":"其他教材","words":[{"word":"decline","pos":"v.","meaning":"婉拒；下降","ipa":"/dɪˈklaɪn/"},{"word":"refuse","pos":"v.","meaning":"拒绝","ipa":"/rɪˈfjuːz/"},{"word":"reject","pos":"v.","meaning":"断然拒绝","ipa":"/rɪˈdʒekt/"}],"note":"decline 最委婉，refuse 常用，reject 语气最强且多接物。"},{"id":"g191","level":"高中","source":"其他教材","words":[{"word":"delay","pos":"v.","meaning":"推迟；耽搁","ipa":"/dɪˈleɪ/"},{"word":"postpone","pos":"v.","meaning":"推迟","ipa":"/pəˈspəʊn/"},{"word":"put off","pos":"phr.","meaning":"推迟","ipa":"/pʊt ɒf/"}],"note":"delay 表“耽搁/延迟”，postpone 与 put off 表“推迟到某时”。"},{"id":"g192","level":"高中","source":"其他教材","words":[{"word":"disturb","pos":"v.","meaning":"打扰","ipa":"/dɪˈstɜːb/"},{"word":"interrupt","pos":"v.","meaning":"打断","ipa":"/ˌɪntəˈrʌpt/"}],"note":"disturb 表“打扰（安宁）”，interrupt 表“打断（谈话/进程）”。"},{"id":"g193","level":"高中","source":"其他教材","words":[{"word":"divide","pos":"v.","meaning":"分开（分成几份）","ipa":"/dɪˈvaɪd/"},{"word":"separate","pos":"v.","meaning":"分离（隔开）","ipa":"/ˈsepəreɪt/"}],"note":"divide 强调把整体分成部分，separate 强调把原本连在一起的分开。"},{"id":"g194","level":"高中","source":"其他教材","words":[{"word":"doubt","pos":"v./n.","meaning":"怀疑（不信）","ipa":"/daʊt/"},{"word":"suspect","pos":"v.","meaning":"怀疑（猜想）","ipa":"/səˈspekt/"}],"note":"doubt 表“不相信”，suspect 表“猜测/认为可能”。"},{"id":"g195","level":"高中","source":"其他教材","words":[{"word":"employee","pos":"n.","meaning":"雇员","ipa":"/ɪmˈplɔɪiː/"},{"word":"employer","pos":"n.","meaning":"雇主","ipa":"/ɪmˈplɔɪə(r)/"}],"note":"-ee 表“被雇用的人”，-er 表“雇用者”。"},{"id":"g196","level":"高中","source":"其他教材","words":[{"word":"environment","pos":"n.","meaning":"环境","ipa":"/ɪnˈvaɪrənmənt/"},{"word":"surroundings","pos":"n.","meaning":"周围环境","ipa":"/səˈraʊndɪŋz/"}],"note":"environment 泛指自然环境，surroundings 指四周的具体环境。"},{"id":"g197","level":"高中","source":"其他教材","words":[{"word":"especially","pos":"adv.","meaning":"尤其","ipa":"/ɪˈspeʃəli/"},{"word":"specially","pos":"adv.","meaning":"专门地","ipa":"/ˈspeʃəli/"},{"word":"particularly","pos":"adv.","meaning":"特别地","ipa":"/pəˈtɪkjələli/"}],"note":"especially 表“尤其”，specially 表“专门”，particularly 表“特别地”。"},{"id":"g198","level":"高中","source":"其他教材","words":[{"word":"external","pos":"adj.","meaning":"外部的","ipa":"/ɪkˈstɜːnl/"},{"word":"internal","pos":"adj.","meaning":"内部的","ipa":"/ɪnˈtɜːnl/"}],"note":"external 是“外部的”，internal 是“内部的”。"},{"id":"g199","level":"高中","source":"其他教材","words":[{"word":"fee","pos":"n.","meaning":"费用（学费/会费）","ipa":"/fiː/"},{"word":"fare","pos":"n.","meaning":"车费；票价","ipa":"/feə(r)/"}],"note":"fee 指服务费/学费，fare 指交通费。"},{"id":"g200","level":"高中","source":"其他教材","words":[{"word":"habit","pos":"n.","meaning":"习惯（个人）","ipa":"/ˈhæbɪt/"},{"word":"custom","pos":"n.","meaning":"风俗（社会）","ipa":"/ˈkʌstəm/"},{"word":"tradition","pos":"n.","meaning":"传统","ipa":"/trəˈdɪʃn/"}],"note":"habit 是个人的习惯，custom 是社会的风俗，tradition 是代代相传的传统。"},{"id":"g201","level":"高中","source":"其他教材","words":[{"word":"help","pos":"v./n.","meaning":"帮助","ipa":"/help/"},{"word":"aid","pos":"n./v.","meaning":"援助（正式）","ipa":"/eɪd/"},{"word":"assist","pos":"v.","meaning":"协助","ipa":"/əˈsɪst/"}],"note":"help 最常用，aid 表正式援助，assist 表辅助协助。"},{"id":"g202","level":"高中","source":"其他教材","words":[{"word":"idea","pos":"n.","meaning":"想法","ipa":"/aɪˈdɪə/"},{"word":"opinion","pos":"n.","meaning":"意见","ipa":"/əˈpɪnjən/"},{"word":"view","pos":"n.","meaning":"观点","ipa":"/vjuː/"}],"note":"idea 泛指想法，opinion 是个人意见，view 是持有的看法。"},{"id":"g203","level":"高中","source":"其他教材","words":[{"word":"include","pos":"v.","meaning":"包括（列举）","ipa":"/ɪnˈkluːd/"},{"word":"contain","pos":"v.","meaning":"包含（容纳）","ipa":"/kənˈteɪn/"},{"word":"involve","pos":"v.","meaning":"涉及","ipa":"/ɪnˈvɒlv/"}],"note":"include 侧重包含在内，contain 侧重容纳，involve 侧重涉及。"},{"id":"g204","level":"高中","source":"其他教材","words":[{"word":"means","pos":"n.","meaning":"手段","ipa":"/miːnz/"},{"word":"method","pos":"n.","meaning":"方法","ipa":"/ˈmeθəd/"},{"word":"way","pos":"n.","meaning":"方式；途径","ipa":"/weɪ/"}],"note":"means 是“手段”，method 是“方法（成体系）”，way 是通用“方式”。"},{"id":"g205","level":"高中","source":"其他教材","words":[{"word":"normal","pos":"adj.","meaning":"正常的","ipa":"/ˈnɔːml/"},{"word":"ordinary","pos":"adj.","meaning":"普通的","ipa":"/ˈɔːdnri/"},{"word":"common","pos":"adj.","meaning":"常见的","ipa":"/ˈkɒmən/"},{"word":"usual","pos":"adj.","meaning":"通常的","ipa":"/ˈjuːʒuəl/"}],"note":"normal 表“正常”，ordinary 表“普通”，common 表“常见”，usual 表“惯常”。"},{"id":"g206","level":"高中","source":"其他教材","words":[{"word":"happen","pos":"v.","meaning":"发生（偶然）","ipa":"/ˈhæpən/"},{"word":"occur","pos":"v.","meaning":"发生（正式）","ipa":"/əˈkɜː(r)/"},{"word":"take place","pos":"phr.","meaning":"发生（有计划）","ipa":"/teɪk pleɪs/"}],"note":"happen 多指偶然发生，occur 较正式，take place 多指按计划发生。"},{"id":"g207","level":"高中","source":"其他教材","words":[{"word":"offer","pos":"v.","meaning":"主动提供","ipa":"/ˈɒfə(r)/"},{"word":"provide","pos":"v.","meaning":"提供","ipa":"/prəˈvaɪd/"},{"word":"supply","pos":"v.","meaning":"供应","ipa":"/səˈplaɪ/"}],"note":"offer 强调主动给予，provide 表“提供”，supply 表“供应（物资）”。"},{"id":"g208","level":"高中","source":"其他教材","words":[{"word":"permanent","pos":"adj.","meaning":"永久的","ipa":"/ˈpɜːmənənt/"},{"word":"temporary","pos":"adj.","meaning":"临时的","ipa":"/ˈtemprəri/"}],"note":"permanent 是“永久的”，temporary 是“临时的”。"},{"id":"g209","level":"高中","source":"其他教材","words":[{"word":"power","pos":"n.","meaning":"权力；力量","ipa":"/ˈpaʊə(r)/"},{"word":"strength","pos":"n.","meaning":"体力；力量","ipa":"/streŋθ/"},{"word":"force","pos":"n.","meaning":"武力；力","ipa":"/fɔːs/"},{"word":"energy","pos":"n.","meaning":"精力；能量","ipa":"/ˈenədʒi/"}],"note":"power 表权力/动力，strength 表体力/强度，force 表外力/武力，energy 表精力/能量。"},{"id":"g210","level":"高中","source":"其他教材","words":[{"word":"predict","pos":"v.","meaning":"预测","ipa":"/prɪˈdɪkt/"},{"word":"forecast","pos":"v./n.","meaning":"预报","ipa":"/ˈfɔːkɑːst/"}],"note":"predict 泛指预测，forecast 常用于天气等预报。"},{"id":"g211","level":"高中","source":"其他教材","words":[{"word":"protect","pos":"v.","meaning":"保护","ipa":"/prəˈtekt/"},{"word":"defend","pos":"v.","meaning":"保卫；辩护","ipa":"/dɪˈfend/"},{"word":"guard","pos":"v./n.","meaning":"守卫","ipa":"/ɡɑːd/"}],"note":"protect 表保护安全，defend 表防御/辩护，guard 表站岗守卫。"},{"id":"g212","level":"高中","source":"其他教材","words":[{"word":"quantity","pos":"n.","meaning":"数量","ipa":"/ˈkwɒntəti/"},{"word":"quality","pos":"n.","meaning":"质量","ipa":"/ˈkwɒləti/"}],"note":"quantity 是“数量”，quality 是“质量”，q 后字母不同。"},{"id":"g213","level":"高中","source":"其他教材","words":[{"word":"reduce","pos":"v.","meaning":"减少（降低）","ipa":"/rɪˈdjuːs/"},{"word":"decrease","pos":"v.","meaning":"减少（数量）","ipa":"/dɪˈkriːs/"}],"note":"reduce 多指降低程度/成本，decrease 多指数量减少。"},{"id":"g214","level":"高中","source":"其他教材","words":[{"word":"replace","pos":"v.","meaning":"取代","ipa":"/rɪˈpleɪs/"},{"word":"substitute","pos":"v./n.","meaning":"替代","ipa":"/ˈsʌbstɪtjuːt/"}],"note":"replace 表“取代”，substitute A for B 表“用 A 替代 B”。"},{"id":"g215","level":"高中","source":"其他教材","words":[{"word":"safe","pos":"adj.","meaning":"安全的","ipa":"/seɪf/"},{"word":"secure","pos":"adj.","meaning":"安全的；稳固的","ipa":"/sɪˈkjʊə(r)/"}],"note":"safe 表“无危险”，secure 表“有保障/稳固”。"},{"id":"g216","level":"高中","source":"其他教材","words":[{"word":"salary","pos":"n.","meaning":"薪水（月/年）","ipa":"/ˈsæləri/"},{"word":"wage","pos":"n.","meaning":"工资（时/周）","ipa":"/weɪdʒ/"},{"word":"pay","pos":"n.","meaning":"报酬","ipa":"/peɪ/"}],"note":"salary 多指按月/年发放，wage 多按小时/周，pay 泛指报酬。"},{"id":"g217","level":"高中","source":"其他教材","words":[{"word":"scene","pos":"n.","meaning":"场景","ipa":"/siːn/"},{"word":"scenery","pos":"n.","meaning":"风景（总称）","ipa":"/ˈsiːnəri/"},{"word":"sight","pos":"n.","meaning":"景象；名胜","ipa":"/saɪt/"}],"note":"scene 是具体场景，scenery 是不可数风景总称，sight 是可数景象/名胜。"},{"id":"g218","level":"高中","source":"其他教材","words":[{"word":"seek","pos":"v.","meaning":"寻找（正式）","ipa":"/siːk/"},{"word":"search","pos":"v.","meaning":"搜寻","ipa":"/sɜːtʃ/"}],"note":"seek 表“寻求”，search 表“搜查/搜索”。"},{"id":"g219","level":"高中","source":"其他教材","words":[{"word":"spread","pos":"v.","meaning":"传播；蔓延","ipa":"/spred/"},{"word":"scatter","pos":"v.","meaning":"散开；撒","ipa":"/ˈskætə(r)/"}],"note":"spread 表“蔓延/传播”，scatter 表“向四处散开”。"},{"id":"g220","level":"高中","source":"其他教材","words":[{"word":"stand","pos":"v.","meaning":"忍受","ipa":"/stænd/"},{"word":"bear","pos":"v.","meaning":"忍受","ipa":"/beə(r)/"},{"word":"tolerate","pos":"v.","meaning":"容忍","ipa":"/ˈtɒləreɪt/"}],"note":"stand/bear 口语常用，tolerate 较正式。"},{"id":"g221","level":"高中","source":"其他教材","words":[{"word":"subject","pos":"n.","meaning":"学科；主题","ipa":"/ˈsʌbdʒɪkt/"},{"word":"topic","pos":"n.","meaning":"话题","ipa":"/ˈtɒpɪk/"},{"word":"theme","pos":"n.","meaning":"主题","ipa":"/θiːm/"}],"note":"subject 是“学科/主题”，topic 是“话题”，theme 是“主题（作品中心）”。"},{"id":"g222","level":"高中","source":"其他教材","words":[{"word":"terrible","pos":"adj.","meaning":"可怕的；糟糕的","ipa":"/ˈterəbl/"},{"word":"terrified","pos":"adj.","meaning":"恐惧的（人）","ipa":"/ˈterɪfaɪd/"},{"word":"terrifying","pos":"adj.","meaning":"令人恐惧的（物）","ipa":"/ˈterɪfaɪɪŋ/"}],"note":"terrible 表“糟糕/可怕”，-ed 表人的感受，-ing 表事物的性质。"},{"id":"g223","level":"高中","source":"其他教材","words":[{"word":"treat","pos":"v.","meaning":"治疗","ipa":"/triːt/"},{"word":"cure","pos":"v./n.","meaning":"治愈","ipa":"/kjʊə(r)/"}],"note":"treat 是“治疗的过程”，cure 是“治愈的结果”。"},{"id":"g224","level":"高中","source":"其他教材","words":[{"word":"wait","pos":"v.","meaning":"等待","ipa":"/weɪt/"},{"word":"await","pos":"v.","meaning":"等待（正式，及物）","ipa":"/əˈweɪt/"}],"note":"wait 多作不及物（wait for），await 直接接宾语。"},{"id":"g225","level":"高中","source":"其他教材","words":[{"word":"worth","pos":"adj.","meaning":"值得（接名词/动名词）","ipa":"/wɜːθ/"},{"word":"worthy","pos":"adj.","meaning":"值得的（接 of/to do）","ipa":"/ˈwɜːði/"},{"word":"worthwhile","pos":"adj.","meaning":"值得做的","ipa":"/ˌwɜːθˈwaɪl/"}],"note":"worth 接 doing，worthy 接 of/to do，worthwhile 作定语或表语。"},{"id":"g226","level":"高中","source":"其他教材","words":[{"word":"damage","pos":"v./n.","meaning":"损坏","ipa":"/ˈdæmɪdʒ/"},{"word":"destroy","pos":"v.","meaning":"摧毁","ipa":"/dɪˈstrɔɪ/"},{"word":"ruin","pos":"v./n.","meaning":"毁灭","ipa":"/ˈruːɪn/"}],"note":"damage 是部分损坏，destroy 是彻底摧毁，ruin 强调毁灭性破坏。"},{"id":"g227","level":"高中","source":"其他教材","words":[{"word":"react","pos":"v.","meaning":"反应","ipa":"/riˈækt/"},{"word":"respond","pos":"v.","meaning":"回应","ipa":"/rɪˈspɒnd/"}],"note":"react 是“对刺激做出反应”，respond 是“回答/响应”。"},{"id":"g229","level":"四级","source":"四六级词表","words":[{"word":"access","pos":"n.","meaning":"通道；进入权","ipa":"/ˈækses/"},{"word":"excess","pos":"n.","meaning":"超过；过量","ipa":"/ɪkˈses/"}],"note":"access 表“进入的途径”，excess 表“超出的量”，拼写只差 c/s 顺序。"},{"id":"g230","level":"四级","source":"四六级词表","words":[{"word":"aboard","pos":"prep./adv.","meaning":"在船/飞机上","ipa":"/əˈbɔːd/"},{"word":"abroad","pos":"adv.","meaning":"在国外","ipa":"/əˈbrɔːd/"}],"note":"aboard 表“在交通工具上”，abroad 表“在国外”。"},{"id":"g231","level":"四级","source":"四六级词表","words":[{"word":"adapt","pos":"v.","meaning":"适应；改编","ipa":"/əˈdæpt/"},{"word":"adopt","pos":"v.","meaning":"采用；收养","ipa":"/əˈdɒpt/"},{"word":"adept","pos":"adj.","meaning":"内行的","ipa":"/əˈdept/"}],"note":"adapt 表“适应/改编”，adopt 表“采用/收养”，adept 表“熟练的”。"},{"id":"g232","level":"四级","source":"四六级词表","words":[{"word":"altitude","pos":"n.","meaning":"海拔","ipa":"/ˈæltɪtjuːd/"},{"word":"attitude","pos":"n.","meaning":"态度","ipa":"/ˈætɪtjuːd/"}],"note":"altitude 是“海拔”，attitude 是“态度”，拼写相近。"},{"id":"g233","level":"四级","source":"四六级词表","words":[{"word":"assent","pos":"n./v.","meaning":"同意","ipa":"/əˈsent/"},{"word":"ascent","pos":"n.","meaning":"上升","ipa":"/əˈsent/"},{"word":"accent","pos":"n.","meaning":"口音","ipa":"/ˈæksənt/"}],"note":"assent 是“同意”，ascent 是“上升”，accent 是“口音”。"},{"id":"g234","level":"四级","source":"四六级词表","words":[{"word":"aural","pos":"adj.","meaning":"听觉的","ipa":"/ˈɔːrəl/"},{"word":"oral","pos":"adj.","meaning":"口头的","ipa":"/ˈɔːrəl/"}],"note":"aural 与 ear（听觉）相关，oral 与 mouth（口说）相关。"},{"id":"g235","level":"四级","source":"四六级词表","words":[{"word":"badge","pos":"n.","meaning":"徽章","ipa":"/bædʒ/"},{"word":"bandage","pos":"n.","meaning":"绷带","ipa":"/ˈbændɪdʒ/"}],"note":"badge 是“徽章”，bandage 是“绷带”，拼写相近。"},{"id":"g236","level":"四级","source":"四六级词表","words":[{"word":"bloom","pos":"v./n.","meaning":"开花","ipa":"/bluːm/"},{"word":"blossom","pos":"n./v.","meaning":"开花（结果前）","ipa":"/ˈblɒsəm/"},{"word":"bosom","pos":"n.","meaning":"胸口","ipa":"/ˈbʊzəm/"}],"note":"bloom 侧重花朵绽放，blossom 多指果树开花，bosom 是“胸口”。"},{"id":"g237","level":"四级","source":"四六级词表","words":[{"word":"blush","pos":"v.","meaning":"脸红（害羞）","ipa":"/blʌʃ/"},{"word":"flush","pos":"v.","meaning":"泛红；冲洗","ipa":"/flʌʃ/"}],"note":"blush 多因害羞脸红，flush 可指因激动/热度泛红。"},{"id":"g238","level":"四级","source":"四六级词表","words":[{"word":"bride","pos":"n.","meaning":"新娘","ipa":"/braɪd/"},{"word":"bribe","pos":"n./v.","meaning":"贿赂","ipa":"/braɪb/"}],"note":"bride 是“新娘”，bribe 是“贿赂”，拼写相近。"},{"id":"g239","level":"四级","source":"四六级词表","words":[{"word":"bullet","pos":"n.","meaning":"子弹","ipa":"/ˈbʊlɪt/"},{"word":"bulletin","pos":"n.","meaning":"公告","ipa":"/ˈbʊlətɪn/"}],"note":"bullet 是“子弹”，bulletin 是“公告”，多一个 in。"},{"id":"g240","level":"四级","source":"四六级词表","words":[{"word":"cane","pos":"n.","meaning":"手杖","ipa":"/keɪn/"},{"word":"crane","pos":"n.","meaning":"起重机；鹤","ipa":"/kreɪn/"}],"note":"cane 是“手杖”，crane 是“起重机/鹤”，拼写相近。"},{"id":"g241","level":"四级","source":"四六级词表","words":[{"word":"campaign","pos":"n.","meaning":"战役；运动","ipa":"/kæmˈpeɪn/"},{"word":"champion","pos":"n.","meaning":"冠军","ipa":"/ˈtʃæmpiən/"},{"word":"champagne","pos":"n.","meaning":"香槟","ipa":"/ʃæmˈpeɪn/"}],"note":"campaign 是“活动/战役”，champion 是“冠军”，champagne 是“香槟”。"},{"id":"g242","level":"四级","source":"四六级词表","words":[{"word":"capacity","pos":"n.","meaning":"容量；能力","ipa":"/kəˈpæsəti/"},{"word":"capital","pos":"n.","meaning":"首都；资本","ipa":"/ˈkæpɪtl/"},{"word":"capitol","pos":"n.","meaning":"议会大厦","ipa":"/ˈkæpɪtl/"}],"note":"capacity 是“容量”，capital 是“首都/资本”，capitol 是“国会大厦”。"},{"id":"g243","level":"四级","source":"四六级词表","words":[{"word":"casual","pos":"adj.","meaning":"随意的","ipa":"/ˈkæʒuəl/"},{"word":"causal","pos":"adj.","meaning":"因果的","ipa":"/ˈkɔːzl/"}],"note":"casual 是“随便的”，causal 是“因果的”，只差一个字母。"},{"id":"g244","level":"四级","source":"四六级词表","words":[{"word":"collar","pos":"n.","meaning":"衣领","ipa":"/ˈkɒlə(r)/"},{"word":"cellar","pos":"n.","meaning":"地窖","ipa":"/ˈselə(r)/"},{"word":"color","pos":"n.","meaning":"颜色","ipa":"/ˈkʌlə(r)/"}],"note":"collar 是“衣领”，cellar 是“地窖”，color 是“颜色”。"},{"id":"g245","level":"四级","source":"四六级词表","words":[{"word":"collision","pos":"n.","meaning":"碰撞","ipa":"/kəˈlɪʒn/"},{"word":"collusion","pos":"n.","meaning":"串通","ipa":"/kəˈluːʒn/"}],"note":"collision 是“碰撞”，collusion 是“勾结/串通”。"},{"id":"g246","level":"四级","source":"四六级词表","words":[{"word":"compel","pos":"v.","meaning":"强迫","ipa":"/kəmˈpel/"},{"word":"impel","pos":"v.","meaning":"推动","ipa":"/ɪmˈpel/"},{"word":"repel","pos":"v.","meaning":"击退","ipa":"/rɪˈpel/"},{"word":"dispel","pos":"v.","meaning":"驱散","ipa":"/dɪˈspel/"}],"note":"com-强迫，im-推动，re-击退，dis-驱散，词根 pel 表“推”。"},{"id":"g247","level":"四级","source":"四六级词表","words":[{"word":"complement","pos":"n.","meaning":"补足物","ipa":"/ˈkɒmplɪmənt/"},{"word":"compliment","pos":"n.","meaning":"赞美","ipa":"/ˈkɒmplɪmənt/"}],"note":"complement 与“补充”相关（e），compliment 是“赞美”（i）。"},{"id":"g248","level":"四级","source":"四六级词表","words":[{"word":"confirm","pos":"v.","meaning":"确认","ipa":"/kənˈfɜːm/"},{"word":"conform","pos":"v.","meaning":"顺从","ipa":"/kənˈfɔːm/"},{"word":"confine","pos":"v.","meaning":"限制","ipa":"/kənˈfaɪn/"}],"note":"confirm 表“确认”，conform 表“遵守/顺从”，confine 表“限制”。"},{"id":"g249","level":"四级","source":"四六级词表","words":[{"word":"conscientious","pos":"adj.","meaning":"认真的","ipa":"/ˌkɒnʃiˈenʃəs/"},{"word":"conscious","pos":"adj.","meaning":"有意识的","ipa":"/ˈkɒnʃəs/"}],"note":"conscientious 是“认真尽责的”，conscious 是“清醒/有意识的”。"},{"id":"g250","level":"四级","source":"四六级词表","words":[{"word":"contact","pos":"n./v.","meaning":"接触；联系","ipa":"/ˈkɒntækt/"},{"word":"contract","pos":"n./v.","meaning":"合同；收缩","ipa":"/ˈkɒntrækt/"},{"word":"contrast","pos":"n./v.","meaning":"对比","ipa":"/ˈkɒntrɑːst/"}],"note":"contact 是“联系”，contract 是“合同/收缩”，contrast 是“对比”。"},{"id":"g251","level":"四级","source":"四六级词表","words":[{"word":"contend","pos":"v.","meaning":"斗争；主张","ipa":"/kənˈtend/"},{"word":"content","pos":"n./adj.","meaning":"内容；满足的","ipa":"/ˈkɒntent/"},{"word":"context","pos":"n.","meaning":"上下文","ipa":"/ˈkɒntekst/"},{"word":"contest","pos":"n.","meaning":"竞赛","ipa":"/ˈkɒntest/"}],"note":"contend 表“争斗”，content 表“内容/满足”，context 表“语境”，contest 表“比赛”。"},{"id":"g252","level":"四级","source":"四六级词表","words":[{"word":"contort","pos":"v.","meaning":"扭曲","ipa":"/kənˈtɔːt/"},{"word":"distort","pos":"v.","meaning":"歪曲","ipa":"/dɪˈstɔːt/"},{"word":"retort","pos":"v.","meaning":"反驳","ipa":"/rɪˈtɔːt/"}],"note":"contort 表“扭歪”，distort 表“歪曲事实”，retort 表“反驳”。"},{"id":"g253","level":"四级","source":"四六级词表","words":[{"word":"council","pos":"n.","meaning":"议会；委员会","ipa":"/ˈkaʊnsl/"},{"word":"counsel","pos":"n./v.","meaning":"忠告","ipa":"/ˈkaʊnsl/"},{"word":"consul","pos":"n.","meaning":"领事","ipa":"/ˈkɒnsl/"}],"note":"council 是“委员会”，counsel 是“忠告/律师”，consul 是“领事”。"},{"id":"g254","level":"四级","source":"四六级词表","words":[{"word":"credible","pos":"adj.","meaning":"可信的","ipa":"/ˈkredəbl/"},{"word":"creditable","pos":"adj.","meaning":"值得称赞的","ipa":"/ˈkredɪtəbl/"},{"word":"credulous","pos":"adj.","meaning":"轻信的","ipa":"/ˈkredjələs/"}],"note":"credible 表“可信”，creditable 表“值得称赞”，credulous 表“轻信的”。"},{"id":"g255","level":"四级","source":"四六级词表","words":[{"word":"decent","pos":"adj.","meaning":"得体的","ipa":"/ˈdiːsnt/"},{"word":"descent","pos":"n.","meaning":"下降；血统","ipa":"/dɪˈsent/"},{"word":"descend","pos":"v.","meaning":"下降","ipa":"/dɪˈsend/"}],"note":"decent 是形容词“得体的”，descent 是名词“下降”，descend 是动词“下降”。"},{"id":"g256","level":"四级","source":"四六级词表","words":[{"word":"delicate","pos":"adj.","meaning":"微妙的；精致的","ipa":"/ˈdelɪkət/"},{"word":"dedicate","pos":"v.","meaning":"奉献","ipa":"/ˈdedɪkeɪt/"}],"note":"delicate 是“精致的/微妙的”，dedicate 是“奉献/致力于”。"},{"id":"g257","level":"四级","source":"四六级词表","words":[{"word":"device","pos":"n.","meaning":"装置","ipa":"/dɪˈvaɪs/"},{"word":"devise","pos":"v.","meaning":"设计","ipa":"/dɪˈvaɪz/"}],"note":"device 是名词“装置”，devise 是动词“设计”，c 与 s 不同。"},{"id":"g258","level":"四级","source":"四六级词表","words":[{"word":"desert","pos":"n./v.","meaning":"沙漠；抛弃","ipa":"/ˈdezət/"},{"word":"dessert","pos":"n.","meaning":"甜点","ipa":"/dɪˈzɜːt/"}],"note":"dessert 比 desert 多一个 s，甜点常吃两份（dessert 两个 s）。"},{"id":"g259","level":"四级","source":"四六级词表","words":[{"word":"dizzy","pos":"adj.","meaning":"眩晕的","ipa":"/ˈdɪzi/"},{"word":"dazzle","pos":"v.","meaning":"使炫目","ipa":"/ˈdæzl/"}],"note":"dizzy 是“头晕的”，dazzle 是“使眼花”。"},{"id":"g260","level":"四级","source":"四六级词表","words":[{"word":"drag","pos":"v.","meaning":"拖拉","ipa":"/dræɡ/"},{"word":"dreg","pos":"n.","meaning":"渣滓","ipa":"/dreɡ/"}],"note":"drag 是“拖”，dreg 是“渣滓/沉淀物”，拼写相近。"},{"id":"g261","level":"四级","source":"四六级词表","words":[{"word":"drought","pos":"n.","meaning":"干旱","ipa":"/draʊt/"},{"word":"draught","pos":"n.","meaning":"气流；通风","ipa":"/drɑːft/"}],"note":"drought 是“干旱”，draught 是“气流”，ou 与 au 不同。"},{"id":"g262","level":"四级","source":"四六级词表","words":[{"word":"deduce","pos":"v.","meaning":"推论","ipa":"/dɪˈdjuːs/"},{"word":"induce","pos":"v.","meaning":"诱导","ipa":"/ɪnˈdjuːs/"},{"word":"reduce","pos":"v.","meaning":"减少","ipa":"/rɪˈdjuːs/"},{"word":"seduce","pos":"v.","meaning":"引诱","ipa":"/sɪˈdjuːs/"}],"note":"de-推论，in-诱导，re-减少，se-引诱，词根 duce 表“引导”。"},{"id":"g263","level":"四级","source":"四六级词表","words":[{"word":"dual","pos":"adj.","meaning":"双重的","ipa":"/ˈdjuːəl/"},{"word":"duel","pos":"n.","meaning":"决斗","ipa":"/ˈdjuːəl/"}],"note":"dual 是“双重的”，duel 是“决斗”，拼写相近。"},{"id":"g264","level":"四级","source":"四六级词表","words":[{"word":"eminent","pos":"adj.","meaning":"杰出的","ipa":"/ˈemɪnənt/"},{"word":"imminent","pos":"adj.","meaning":"迫近的","ipa":"/ˈɪmɪnənt/"},{"word":"immune","pos":"adj.","meaning":"免疫的","ipa":"/ɪˈmjuːn/"}],"note":"eminent 是“杰出的”，imminent 是“迫近的”，immune 是“免疫的”。"},{"id":"g265","level":"四级","source":"四六级词表","words":[{"word":"excess","pos":"n.","meaning":"过量","ipa":"/ɪkˈses/"},{"word":"exceed","pos":"v.","meaning":"超过","ipa":"/ɪkˈsiːd/"},{"word":"excel","pos":"v.","meaning":"擅长","ipa":"/ɪkˈsel/"}],"note":"excess 是名词“过量”，exceed 是动词“超过”，excel 是“擅长”。"},{"id":"g266","level":"四级","source":"四六级词表","words":[{"word":"exclaim","pos":"v.","meaning":"呼喊","ipa":"/ɪkˈskleɪm/"},{"word":"proclaim","pos":"v.","meaning":"宣布","ipa":"/prəˈkleɪm/"},{"word":"acclaim","pos":"v.","meaning":"称赞","ipa":"/əˈkleɪm/"},{"word":"declaim","pos":"v.","meaning":"朗诵","ipa":"/dɪˈkleɪm/"}],"note":"ex-惊呼，pro-宣告，ac-称赞，de-朗诵，词根 claim 表“喊叫”。"},{"id":"g267","level":"四级","source":"四六级词表","words":[{"word":"expand","pos":"v.","meaning":"扩张","ipa":"/ɪkˈspænd/"},{"word":"expend","pos":"v.","meaning":"花费","ipa":"/ɪkˈspend/"},{"word":"extend","pos":"v.","meaning":"延长","ipa":"/ɪkˈstend/"}],"note":"expand 表“扩大”，expend 表“消耗”，extend 表“延伸/延长”。"},{"id":"g268","level":"四级","source":"四六级词表","words":[{"word":"explicit","pos":"adj.","meaning":"明确的","ipa":"/ɪkˈsplɪsɪt/"},{"word":"implicit","pos":"adj.","meaning":"含蓄的","ipa":"/ɪmˈplɪsɪt/"}],"note":"explicit 是“明确直白”，implicit 是“含蓄隐含”。"},{"id":"g269","level":"四级","source":"四六级词表","words":[{"word":"extend","pos":"v.","meaning":"延伸","ipa":"/ɪkˈstend/"},{"word":"extent","pos":"n.","meaning":"范围","ipa":"/ɪkˈstent/"},{"word":"extant","pos":"adj.","meaning":"现存的","ipa":"/ekˈstænt/"}],"note":"extend 是动词，extent 是名词“程度/范围”，extant 是形容词“现存的”。"},{"id":"g270","level":"四级","source":"四六级词表","words":[{"word":"faint","pos":"v./adj.","meaning":"昏厥；微弱的","ipa":"/feɪnt/"},{"word":"feint","pos":"n.","meaning":"佯攻","ipa":"/feɪnt/"}],"note":"faint 是“昏倒/微弱的”，feint 是“佯攻/假动作”。"},{"id":"g271","level":"四级","source":"四六级词表","words":[{"word":"gasp","pos":"v.","meaning":"喘气","ipa":"/ɡɑːsp/"},{"word":"grasp","pos":"v.","meaning":"抓住；理解","ipa":"/ɡrɑːsp/"}],"note":"gasp 是“喘气”，grasp 是“抓住/领会”，拼写相近。"},{"id":"g272","level":"四级","source":"四六级词表","words":[{"word":"gift","pos":"n.","meaning":"礼物","ipa":"/ɡɪft/"},{"word":"gilt","pos":"adj./n.","meaning":"镀金的","ipa":"/ɡɪlt/"}],"note":"gift 是“礼物”，gilt 是“镀金的”，拼写相近。"},{"id":"g273","level":"四级","source":"四六级词表","words":[{"word":"growl","pos":"v.","meaning":"咆哮","ipa":"/ɡraʊl/"},{"word":"howl","pos":"v.","meaning":"嚎叫","ipa":"/haʊl/"}],"note":"growl 多指动物低吼，howl 指长嚎/呼啸。"},{"id":"g274","level":"四级","source":"四六级词表","words":[{"word":"haunt","pos":"v.","meaning":"萦绕","ipa":"/hɔːnt/"},{"word":"hunt","pos":"v.","meaning":"打猎","ipa":"/hʌnt/"}],"note":"haunt 是“萦绕心头”，hunt 是“打猎/搜寻”。"},{"id":"g275","level":"四级","source":"四六级词表","words":[{"word":"hotel","pos":"n.","meaning":"酒店","ipa":"/həʊˈtel/"},{"word":"hostel","pos":"n.","meaning":"旅社","ipa":"/ˈhɒstl/"}],"note":"hotel 是正规酒店，hostel 是廉价旅社/青年旅舍。"},{"id":"g276","level":"四级","source":"四六级词表","words":[{"word":"hanger","pos":"n.","meaning":"挂钩；衣架","ipa":"/ˈhæŋə(r)/"},{"word":"hangar","pos":"n.","meaning":"机库","ipa":"/ˈhæŋə(r)/"},{"word":"hunger","pos":"n.","meaning":"饥饿","ipa":"/ˈhʌŋɡə(r)/"}],"note":"hanger 是“衣架”，hangar 是“飞机库”，hunger 是“饥饿”。"},{"id":"g277","level":"四级","source":"四六级词表","words":[{"word":"idle","pos":"adj.","meaning":"空闲的","ipa":"/ˈaɪdl/"},{"word":"idol","pos":"n.","meaning":"偶像","ipa":"/ˈaɪdl/"}],"note":"idle 是“空闲的”，idol 是“偶像”，d 与 l 不同。"},{"id":"g278","level":"四级","source":"四六级词表","words":[{"word":"industrial","pos":"adj.","meaning":"工业的","ipa":"/ɪnˈdʌstriəl/"},{"word":"industrious","pos":"adj.","meaning":"勤奋的","ipa":"/ɪnˈdʌstriəs/"}],"note":"industrial 与“工业”相关，industrious 表“勤奋的”。"},{"id":"g279","level":"四级","source":"四六级词表","words":[{"word":"inspiration","pos":"n.","meaning":"灵感","ipa":"/ˌɪnspəˈreɪʃn/"},{"word":"aspiration","pos":"n.","meaning":"抱负","ipa":"/ˌæspəˈreɪʃn/"}],"note":"inspiration 是“灵感”，aspiration 是“志向/抱负”。"},{"id":"g280","level":"四级","source":"四六级词表","words":[{"word":"latitude","pos":"n.","meaning":"纬度","ipa":"/ˈlætɪtjuːd/"},{"word":"altitude","pos":"n.","meaning":"高度","ipa":"/ˈæltɪtjuːd/"},{"word":"gratitude","pos":"n.","meaning":"感激","ipa":"/ˈɡrætɪtjuːd/"}],"note":"latitude 是“纬度”，altitude 是“海拔”，gratitude 是“感激”。"},{"id":"g281","level":"四级","source":"四六级词表","words":[{"word":"liable","pos":"adj.","meaning":"有责任的","ipa":"/ˈlaɪəbl/"},{"word":"reliable","pos":"adj.","meaning":"可靠的","ipa":"/rɪˈlaɪəbl/"}],"note":"liable 表“易…的/有责任的”，reliable 表“可靠的”。"},{"id":"g282","level":"四级","source":"四六级词表","words":[{"word":"literal","pos":"adj.","meaning":"字面的","ipa":"/ˈlɪtərəl/"},{"word":"literary","pos":"adj.","meaning":"文学的","ipa":"/ˈlɪtərəri/"},{"word":"literature","pos":"n.","meaning":"文学","ipa":"/ˈlɪtrətʃə(r)/"}],"note":"literal 是“字面的”，literary 是“文学的”，literature 是“文学”。"},{"id":"g283","level":"四级","source":"四六级词表","words":[{"word":"lapse","pos":"n.","meaning":"流逝；失误","ipa":"/læps/"},{"word":"elapse","pos":"v.","meaning":"消逝","ipa":"/ɪˈlæps/"},{"word":"eclipse","pos":"n.","meaning":"日食","ipa":"/ɪˈklɪps/"}],"note":"lapse 表“时间流逝/失误”，elapse 表“（时间）消逝”，eclipse 表“日食/月食”。"},{"id":"g284","level":"四级","source":"四六级词表","words":[{"word":"medal","pos":"n.","meaning":"奖章","ipa":"/ˈmedl/"},{"word":"metal","pos":"n.","meaning":"金属","ipa":"/ˈmetl/"},{"word":"mental","pos":"adj.","meaning":"精神的","ipa":"/ˈmentl/"},{"word":"mortal","pos":"adj.","meaning":"致命的","ipa":"/ˈmɔːtl/"},{"word":"meddle","pos":"v.","meaning":"干涉","ipa":"/ˈmedl/"}],"note":"medal 奖章，metal 金属，mental 精神，mortal 致命，meddle 干涉。"},{"id":"g285","level":"四级","source":"四六级词表","words":[{"word":"mission","pos":"n.","meaning":"使命","ipa":"/ˈmɪʃn/"},{"word":"emission","pos":"n.","meaning":"排放","ipa":"/ɪˈmɪʃn/"},{"word":"mansion","pos":"n.","meaning":"大厦","ipa":"/ˈmænʃn/"}],"note":"mission 是“使命”，emission 是“排放物”，mansion 是“大厦”。"},{"id":"g286","level":"四级","source":"四六级词表","words":[{"word":"moral","pos":"adj.","meaning":"道德的","ipa":"/ˈmɒrəl/"},{"word":"mortal","pos":"adj.","meaning":"致命的","ipa":"/ˈmɔːtl/"}],"note":"moral 是“道德的”，mortal 是“致命的/终有一死的”。"},{"id":"g287","level":"四级","source":"四六级词表","words":[{"word":"orbit","pos":"n./v.","meaning":"轨道；环绕","ipa":"/ˈɔːbɪt/"},{"word":"order","pos":"n./v.","meaning":"命令；秩序","ipa":"/ˈɔːdə(r)/"}],"note":"orbit 是“轨道”，order 是“命令/秩序”，拼写相近。"},{"id":"g288","level":"四级","source":"四六级词表","words":[{"word":"patent","pos":"n.","meaning":"专利","ipa":"/ˈpætnt/"},{"word":"potent","pos":"adj.","meaning":"有力的","ipa":"/ˈpəʊtnt/"},{"word":"potential","pos":"adj./n.","meaning":"潜在的","ipa":"/pəˈtenʃl/"}],"note":"patent 是“专利”，potent 是“强有力的”，potential 是“潜力/潜在的”。"},{"id":"g289","level":"四级","source":"四六级词表","words":[{"word":"personal","pos":"adj.","meaning":"个人的","ipa":"/ˈpɜːsənl/"},{"word":"personnel","pos":"n.","meaning":"人事；员工","ipa":"/ˌpɜːsəˈnel/"}],"note":"personal 是“个人的”，personnel 是“人员/人事”，拼写相近。"},{"id":"g290","level":"四级","source":"四六级词表","words":[{"word":"pier","pos":"n.","meaning":"码头","ipa":"/pɪə(r)/"},{"word":"peer","pos":"n.","meaning":"同龄人","ipa":"/pɪə(r)/"}],"note":"pier 是“码头”，peer 是“同龄人”，拼写相近。"},{"id":"g291","level":"四级","source":"四六级词表","words":[{"word":"precede","pos":"v.","meaning":"先于","ipa":"/prɪˈsiːd/"},{"word":"proceed","pos":"v.","meaning":"继续","ipa":"/prəˈsiːd/"}],"note":"precede 表“在先”，proceed 表“进行/继续”，ce 与 o 不同。"},{"id":"g292","level":"四级","source":"四六级词表","words":[{"word":"rare","pos":"adj.","meaning":"稀有的","ipa":"/reə(r)/"},{"word":"rear","pos":"n./v.","meaning":"后部；抚养","ipa":"/rɪə(r)/"}],"note":"rare 是“稀有的”，rear 是“后部/抚养”，拼写相近。"},{"id":"g293","level":"四级","source":"四六级词表","words":[{"word":"rain","pos":"n./v.","meaning":"雨","ipa":"/reɪn/"},{"word":"reign","pos":"n./v.","meaning":"统治","ipa":"/reɪn/"},{"word":"rein","pos":"n.","meaning":"缰绳","ipa":"/reɪn/"}],"note":"rain 是“雨”，reign 是“统治”，rein 是“缰绳”，读音相同。"},{"id":"g294","level":"四级","source":"四六级词表","words":[{"word":"spare","pos":"adj./v.","meaning":"多余的；节省","ipa":"/speə(r)/"},{"word":"spear","pos":"n.","meaning":"长矛","ipa":"/spɪə(r)/"}],"note":"spare 是“多余的/腾出”，spear 是“长矛”，拼写相近。"},{"id":"g295","level":"四级","source":"四六级词表","words":[{"word":"strive","pos":"v.","meaning":"努力","ipa":"/straɪv/"},{"word":"stride","pos":"v./n.","meaning":"大步走","ipa":"/straɪd/"}],"note":"strive 是“努力奋斗”，stride 是“大步行走”。"},{"id":"g296","level":"四级","source":"四六级词表","words":[{"word":"suit","pos":"n./v.","meaning":"西装；适合","ipa":"/suːt/"},{"word":"suite","pos":"n.","meaning":"套房；套","ipa":"/swiːt/"}],"note":"suit 是“套装/适合”，suite 是“一套/套房”，读音不同。"},{"id":"g297","level":"四级","source":"四六级词表","words":[{"word":"source","pos":"n.","meaning":"来源","ipa":"/sɔːs/"},{"word":"sauce","pos":"n.","meaning":"酱油","ipa":"/sɔːs/"},{"word":"saucer","pos":"n.","meaning":"茶托","ipa":"/ˈsɔːsə(r)/"},{"word":"resource","pos":"n.","meaning":"资源","ipa":"/rɪˈsɔːs/"},{"word":"recourse","pos":"n.","meaning":"求助","ipa":"/rɪˈkɔːs/"}],"note":"source 是“来源”，sauce 是“酱汁”，saucer 是“碟子”，resource 是“资源”，recourse 是“求助”。"},{"id":"g298","level":"四级","source":"四六级词表","words":[{"word":"vain","pos":"adj.","meaning":"徒劳的","ipa":"/veɪn/"},{"word":"vein","pos":"n.","meaning":"血管","ipa":"/veɪn/"}],"note":"vain 是“徒劳的/虚荣的”，vein 是“血管”，读音相同。"},{"id":"g299","level":"四级","source":"四六级词表","words":[{"word":"venture","pos":"n./v.","meaning":"冒险","ipa":"/ˈventʃə(r)/"},{"word":"version","pos":"n.","meaning":"版本","ipa":"/ˈvɜːʃn/"}],"note":"venture 是“冒险”，version 是“版本”，拼写相近。"},{"id":"g300","level":"四级","source":"四六级词表","words":[{"word":"vocation","pos":"n.","meaning":"职业","ipa":"/vəʊˈkeɪʃn/"},{"word":"vacation","pos":"n.","meaning":"假期","ipa":"/vəˈkeɪʃn/"},{"word":"evocation","pos":"n.","meaning":"唤起","ipa":"/ˌevəʊˈkeɪʃn/"},{"word":"revocation","pos":"n.","meaning":"撤销","ipa":"/ˌrevəˈkeɪʃn/"}],"note":"vocation 是“职业”，vacation 是“假期”，evocation 是“唤起”，revocation 是“撤销”。"},{"id":"g301","level":"四级","source":"四六级词表","words":[{"word":"wrap","pos":"v.","meaning":"包裹","ipa":"/ræp/"},{"word":"warp","pos":"v.","meaning":"扭曲","ipa":"/wɔːp/"}],"note":"wrap 是“包/裹”，warp 是“翘曲/扭曲”，拼写相近。"},{"id":"g302","level":"四级","source":"四六级词表","words":[{"word":"widow","pos":"n.","meaning":"寡妇","ipa":"/ˈwɪdəʊ/"},{"word":"window","pos":"n.","meaning":"窗户","ipa":"/ˈwɪndəʊ/"}],"note":"widow 是“寡妇”，window 是“窗户”，只差一个 n。"},{"id":"g303","level":"四级","source":"四六级词表","words":[{"word":"alternate","pos":"adj./v.","meaning":"交替的；轮流","ipa":"/ɔːlˈtɜːnət/"},{"word":"alternative","pos":"n./adj.","meaning":"替代的；选择","ipa":"/ɔːlˈtɜːnətɪv/"}],"note":"alternate 表“交替”，alternative 表“替代方案”。"},{"id":"g304","level":"四级","source":"四六级词表","words":[{"word":"attain","pos":"v.","meaning":"达到","ipa":"/əˈteɪn/"},{"word":"obtain","pos":"v.","meaning":"获得","ipa":"/əbˈteɪn/"},{"word":"retain","pos":"v.","meaning":"保持","ipa":"/rɪˈteɪn/"},{"word":"sustain","pos":"v.","meaning":"维持","ipa":"/səˈsteɪn/"}],"note":"attain 表“达到目标”，obtain 表“获得”，retain 表“保留”，sustain 表“维持”。"},{"id":"g305","level":"四级","source":"四六级词表","words":[{"word":"compose","pos":"v.","meaning":"组成；作曲","ipa":"/kəmˈpəʊz/"},{"word":"comprise","pos":"v.","meaning":"包含；组成","ipa":"/kəmˈpraɪz/"},{"word":"consist","pos":"v.","meaning":"组成","ipa":"/kənˈsɪst/"}],"note":"be composed of / consist of 表“由…组成”，comprise 表“包含”。"},{"id":"g306","level":"四级","source":"四六级词表","words":[{"word":"confident","pos":"adj.","meaning":"自信的","ipa":"/ˈkɒnfɪdənt/"},{"word":"confidential","pos":"adj.","meaning":"机密的","ipa":"/ˌkɒnfɪˈdenʃl/"}],"note":"confident 是“自信的”，confidential 是“保密的”。"},{"id":"g307","level":"四级","source":"四六级词表","words":[{"word":"conserve","pos":"v.","meaning":"节约；保护","ipa":"/kənˈsɜːv/"},{"word":"reserve","pos":"v./n.","meaning":"预订；储备","ipa":"/rɪˈzɜːv/"},{"word":"preserve","pos":"v.","meaning":"保存；保护","ipa":"/prɪˈzɜːv/"}],"note":"conserve 表“节约”，reserve 表“预留/预订”，preserve 表“保存不坏”。"},{"id":"g308","level":"四级","source":"四六级词表","words":[{"word":"disinterested","pos":"adj.","meaning":"公正的","ipa":"/dɪsˈɪntrəstɪd/"},{"word":"uninterested","pos":"adj.","meaning":"不感兴趣的","ipa":"/ʌnˈɪntrəstɪd/"}],"note":"disinterested 表“无偏见的”，uninterested 表“不感兴趣的”。"},{"id":"g309","level":"四级","source":"四六级词表","words":[{"word":"distinct","pos":"adj.","meaning":"明显的；不同的","ipa":"/dɪˈstɪŋkt/"},{"word":"distinctive","pos":"adj.","meaning":"独特的","ipa":"/dɪˈstɪŋktɪv/"}],"note":"distinct 表“清晰可辨/不同”，distinctive 表“有特色的”。"},{"id":"g310","level":"四级","source":"四六级词表","words":[{"word":"equal","pos":"adj./v.","meaning":"相等的","ipa":"/ˈiːkwəl/"},{"word":"equivalent","pos":"adj./n.","meaning":"等价的","ipa":"/ɪˈkwɪvələnt/"}],"note":"equal 表“相等”，equivalent 表“价值/作用相当”。"},{"id":"g311","level":"四级","source":"四六级词表","words":[{"word":"imaginary","pos":"adj.","meaning":"想象的","ipa":"/ɪˈmædʒɪnəri/"},{"word":"imaginative","pos":"adj.","meaning":"富有想象力的","ipa":"/ɪˈmædʒɪnətɪv/"},{"word":"imaginable","pos":"adj.","meaning":"可想象的","ipa":"/ɪˈmædʒɪnəbl/"}],"note":"imaginary 是“虚构的”，imaginative 是“有想象力的”，imaginable 是“可想象的”。"},{"id":"g312","level":"四级","source":"四六级词表","words":[{"word":"inferior","pos":"adj.","meaning":"较差的","ipa":"/ɪnˈfɪəriə(r)/"},{"word":"superior","pos":"adj.","meaning":"更好的","ipa":"/suːˈpɪəriə(r)/"}],"note":"inferior 表“低等的/较差的”，superior 表“更好的”，常接 to。"},{"id":"g313","level":"四级","source":"四六级词表","words":[{"word":"instant","pos":"n./adj.","meaning":"瞬间；立即的","ipa":"/ˈɪnstənt/"},{"word":"instance","pos":"n.","meaning":"实例","ipa":"/ˈɪnstəns/"}],"note":"instant 是“瞬间/速食的”，instance 是“实例”，for instance 表“例如”。"},{"id":"g314","level":"四级","source":"四六级词表","words":[{"word":"limit","pos":"n./v.","meaning":"限制","ipa":"/ˈlɪmɪt/"},{"word":"limitation","pos":"n.","meaning":"局限","ipa":"/ˌlɪmɪˈteɪʃn/"}],"note":"limit 表“限度/限制”，limitation 表“局限性/不足”。"},{"id":"g315","level":"四级","source":"四六级词表","words":[{"word":"neglect","pos":"v.","meaning":"忽视","ipa":"/nɪˈɡlekt/"},{"word":"ignore","pos":"v.","meaning":"不理会","ipa":"/ɪɡˈnɔː(r)/"}],"note":"neglect 表“疏忽”，ignore 表“故意不理睬”。"},{"id":"g316","level":"四级","source":"四六级词表","words":[{"word":"patience","pos":"n.","meaning":"耐心","ipa":"/ˈpeɪʃns/"},{"word":"patients","pos":"n.","meaning":"病人（复数）","ipa":"/ˈpeɪʃnts/"}],"note":"patience 是“耐心”，patients 是“病人们”，读音相同。"},{"id":"g317","level":"四级","source":"四六级词表","words":[{"word":"acquire","pos":"v.","meaning":"获得","ipa":"/əˈkwaɪə(r)/"},{"word":"require","pos":"v.","meaning":"要求","ipa":"/rɪˈkwaɪə(r)/"},{"word":"request","pos":"v./n.","meaning":"请求","ipa":"/rɪˈkwest/"}],"note":"acquire 是“习得/获得”，require 是“要求”，request 是“请求”。"},{"id":"g318","level":"四级","source":"四六级词表","words":[{"word":"sensitive","pos":"adj.","meaning":"敏感的","ipa":"/ˈsensətɪv/"},{"word":"sensible","pos":"adj.","meaning":"明智的","ipa":"/ˈsensəbl/"}],"note":"sensitive 表“敏感的”，sensible 表“理智的/合理的”。"},{"id":"g319","level":"四级","source":"四六级词表","words":[{"word":"respectable","pos":"adj.","meaning":"可敬的","ipa":"/rɪˈspektəbl/"},{"word":"respectful","pos":"adj.","meaning":"恭敬的","ipa":"/rɪˈspektfl/"},{"word":"respective","pos":"adj.","meaning":"各自的","ipa":"/rɪˈspektɪv/"}],"note":"respectable 是“值得尊敬的”，respectful 是“表示尊敬的”，respective 是“各自的”。"},{"id":"g320","level":"四级","source":"四六级词表","words":[{"word":"artificial","pos":"adj.","meaning":"人造的","ipa":"/ˌɑːtɪˈfɪʃl/"},{"word":"artistic","pos":"adj.","meaning":"艺术的","ipa":"/ɑːˈtɪstɪk/"}],"note":"artificial 是“人工的”，artistic 是“艺术的”。"},{"id":"g321","level":"四级","source":"四六级词表","words":[{"word":"date","pos":"n./v.","meaning":"日期；约会","ipa":"/deɪt/"},{"word":"data","pos":"n.","meaning":"数据","ipa":"/ˈdeɪtə/"}],"note":"date 是“日期”，data 是“数据”，读音不同。"},{"id":"g322","level":"四级","source":"四六级词表","words":[{"word":"reveal","pos":"v.","meaning":"揭示","ipa":"/rɪˈviːl/"},{"word":"expose","pos":"v.","meaning":"暴露","ipa":"/ɪkˈspəʊz/"}],"note":"reveal 表“揭示秘密”，expose 表“暴露/揭发”。"},{"id":"g323","level":"四级","source":"四六级词表","words":[{"word":"transform","pos":"v.","meaning":"转变","ipa":"/trænsˈfɔːm/"},{"word":"transfer","pos":"v.","meaning":"转移","ipa":"/trænsˈfɜː(r)/"},{"word":"transport","pos":"v./n.","meaning":"运输","ipa":"/trænsˈpɔːt/"},{"word":"transplant","pos":"v.","meaning":"移植","ipa":"/trænsˈplɑːnt/"}],"note":"form 表“形态转变”，fer 表“转移”，port 表“运输”，plant 表“移植”。"},{"id":"g324","level":"六级","source":"四六级词表","words":[{"word":"cease","pos":"v.","meaning":"停止","ipa":"/siːs/"},{"word":"seize","pos":"v.","meaning":"抓住；夺取","ipa":"/siːz/"}],"note":"cease 是“停止”，seize 是“抓住/夺取”，拼写相近。"},{"id":"g325","level":"六级","source":"四六级词表","words":[{"word":"luxurious","pos":"adj.","meaning":"豪华的","ipa":"/lʌɡˈʒʊəriəs/"},{"word":"luxuriant","pos":"adj.","meaning":"茂盛的","ipa":"/lʌɡˈzjʊəriənt/"}],"note":"luxurious 是“奢侈豪华的”，luxuriant 是“茂盛的”。"},{"id":"g326","level":"六级","source":"四六级词表","words":[{"word":"prescribe","pos":"v.","meaning":"开处方；规定","ipa":"/prɪˈskraɪb/"},{"word":"proscribe","pos":"v.","meaning":"禁止","ipa":"/prəˈskraɪb/"}],"note":"prescribe 是“开药/规定”，proscribe 是“禁止”，前缀不同。"},{"id":"g327","level":"六级","source":"四六级词表","words":[{"word":"rigorous","pos":"adj.","meaning":"严格的；严谨的","ipa":"/ˈrɪɡərəs/"},{"word":"vigorous","pos":"adj.","meaning":"精力充沛的","ipa":"/ˈvɪɡərəs/"}],"note":"rigorous 表“严密的”，vigorous 表“充满活力的”。"},{"id":"g328","level":"六级","source":"四六级词表","words":[{"word":"allude","pos":"v.","meaning":"暗指","ipa":"/əˈluːd/"},{"word":"elude","pos":"v.","meaning":"躲避","ipa":"/ɪˈluːd/"}],"note":"allude 是“暗指”，elude 是“躲避/使困惑”。"},{"id":"g329","level":"六级","source":"四六级词表","words":[{"word":"amend","pos":"v.","meaning":"修正（法律/行为）","ipa":"/əˈmend/"},{"word":"emend","pos":"v.","meaning":"校订（文本）","ipa":"/ɪˈmend/"}],"note":"amend 多用于法律/行为修正，emend 专指校订文字。"},{"id":"g330","level":"六级","source":"四六级词表","words":[{"word":"illicit","pos":"adj.","meaning":"非法的","ipa":"/ɪˈlɪsɪt/"},{"word":"elicit","pos":"v.","meaning":"引出","ipa":"/ɪˈlɪsɪt/"}],"note":"illicit 是“非法的”，elicit 是“引出（回答/反应）”。"},{"id":"g331","level":"六级","source":"四六级词表","words":[{"word":"marshal","pos":"n./v.","meaning":"元帅；整理","ipa":"/ˈmɑːʃl/"},{"word":"martial","pos":"adj.","meaning":"军事的","ipa":"/ˈmɑːʃl/"}],"note":"marshal 是“元帅”，martial 是“军事的/尚武的”。"},{"id":"g332","level":"六级","source":"四六级词表","words":[{"word":"stationary","pos":"adj.","meaning":"静止的","ipa":"/ˈsteɪʃənri/"},{"word":"stationery","pos":"n.","meaning":"文具","ipa":"/ˈsteɪʃənri/"}],"note":"stationary 是“静止的”（a 与 stand 相关），stationery 是“文具”（e 与 paper 相关）。"},{"id":"g333","level":"小学","source":"人教/译林","words":[{"word":"wait","pos":"v.","meaning":"等待","ipa":"/weɪt/"},{"word":"weight","pos":"n.","meaning":"重量","ipa":"/weɪt/"}],"note":"wait 是动词“等待”，weight 是名词“重量”，读音相同。"},{"id":"g334","level":"小学","source":"人教/译林","words":[{"word":"flour","pos":"n.","meaning":"面粉","ipa":"/ˈflaʊə(r)/"},{"word":"flower","pos":"n.","meaning":"花","ipa":"/ˈflaʊə(r)/"}],"note":"flour 是“面粉”，flower 是“花”，读音相同、拼写差一个字母。"},{"id":"g335","level":"小学","source":"人教/译林","words":[{"word":"pair","pos":"n.","meaning":"一对；一双","ipa":"/peə(r)/"},{"word":"pear","pos":"n.","meaning":"梨","ipa":"/peə(r)/"}],"note":"pair 是“一双/一对”，pear 是“梨”，读音相同。"},{"id":"g336","level":"小学","source":"人教/译林","words":[{"word":"hair","pos":"n.","meaning":"头发","ipa":"/heə(r)/"},{"word":"hare","pos":"n.","meaning":"野兔","ipa":"/heə(r)/"}],"note":"hair 是“头发”，hare 是“野兔”，读音相同。"},{"id":"g337","level":"小学","source":"人教/译林","words":[{"word":"deer","pos":"n.","meaning":"鹿","ipa":"/dɪə(r)/"},{"word":"dear","pos":"adj.","meaning":"亲爱的","ipa":"/dɪə(r)/"}],"note":"deer 是“鹿”，dear 是“亲爱的”，读音相同。"},{"id":"g338","level":"小学","source":"人教/译林","words":[{"word":"smell","pos":"v.","meaning":"闻；闻起来","ipa":"/smel/"},{"word":"small","pos":"adj.","meaning":"小的","ipa":"/smɔːl/"}],"note":"smell 是“闻”，small 是“小的”，拼写相近。"},{"id":"g339","level":"小学","source":"人教/译林","words":[{"word":"bed","pos":"n.","meaning":"床","ipa":"/bed/"},{"word":"bad","pos":"adj.","meaning":"坏的","ipa":"/bæd/"}],"note":"bed 是“床”，bad 是“坏的”，元音不同。"},{"id":"g340","level":"小学","source":"人教/译林","words":[{"word":"beach","pos":"n.","meaning":"海滩","ipa":"/biːtʃ/"},{"word":"peach","pos":"n.","meaning":"桃子","ipa":"/piːtʃ/"}],"note":"beach 是“海滩”，peach 是“桃子”，首字母不同。"},{"id":"g341","level":"初中","source":"人教/译林","words":[{"word":"wood","pos":"n.","meaning":"木头","ipa":"/wʊd/"},{"word":"would","pos":"aux.","meaning":"将；愿意","ipa":"/wʊd/"}],"note":"wood 是“木头”，would 是情态动词，读音相同。"},{"id":"g342","level":"初中","source":"人教/译林","words":[{"word":"tale","pos":"n.","meaning":"故事","ipa":"/teɪl/"},{"word":"tail","pos":"n.","meaning":"尾巴","ipa":"/teɪl/"}],"note":"tale 是“故事”，tail 是“尾巴”，读音相同。"},{"id":"g343","level":"初中","source":"人教/译林","words":[{"word":"aloud","pos":"adv.","meaning":"大声地","ipa":"/əˈlaʊd/"},{"word":"allowed","pos":"adj.","meaning":"允许的","ipa":"/əˈlaʊd/"}],"note":"aloud 是副词“大声地”，allowed 是 allow 的过去分词，读音相同。"},{"id":"g344","level":"初中","source":"人教/译林","words":[{"word":"whose","pos":"pron.","meaning":"谁的","ipa":"/huːz/"},{"word":"who's","pos":"phr.","meaning":"谁是（who is 缩写）","ipa":"/huːz/"}],"note":"whose 是“谁的”，who's 是 who is 的缩写，读音相同。"},{"id":"g345","level":"初中","source":"人教/译林","words":[{"word":"rode","pos":"v.","meaning":"ride 的过去式","ipa":"/rəʊd/"},{"word":"road","pos":"n.","meaning":"路","ipa":"/rəʊd/"}],"note":"rode 是 ride 的过去式，road 是“道路”，读音相同。"},{"id":"g346","level":"初中","source":"人教/译林","words":[{"word":"bread","pos":"n.","meaning":"面包","ipa":"/bred/"},{"word":"breath","pos":"n.","meaning":"呼吸","ipa":"/breθ/"}],"note":"bread 是“面包”，breath 是“呼吸”，拼写相近、发音不同。"},{"id":"g347","level":"初中","source":"人教/译林","words":[{"word":"drag","pos":"v.","meaning":"拖","ipa":"/dræɡ/"},{"word":"drug","pos":"n.","meaning":"药；毒品","ipa":"/drʌɡ/"}],"note":"drag 是“拖”，drug 是“药/毒品”，元音不同。"},{"id":"g348","level":"初中","source":"人教/译林","words":[{"word":"heart","pos":"n.","meaning":"心脏","ipa":"/hɑːt/"},{"word":"earth","pos":"n.","meaning":"地球","ipa":"/ɜːθ/"}],"note":"heart 是“心脏”，earth 是“地球”，拼写相近。"},{"id":"g349","level":"初中","source":"人教/译林","words":[{"word":"present","pos":"n./adj.","meaning":"礼物；目前的","ipa":"/ˈpreznt/"},{"word":"pleasant","pos":"adj.","meaning":"令人愉快的","ipa":"/ˈpleznt/"}],"note":"present 是“礼物/目前的”，pleasant 是“令人愉快的”，拼写相近。"},{"id":"g350","level":"初中","source":"人教/译林","words":[{"word":"speak","pos":"v.","meaning":"说","ipa":"/spiːk/"},{"word":"steak","pos":"n.","meaning":"牛排","ipa":"/steɪk/"}],"note":"speak 是“说”，steak 是“牛排”，拼写相近、发音不同。"},{"id":"g351","level":"初中","source":"人教/译林","words":[{"word":"star","pos":"n.","meaning":"星星","ipa":"/stɑː(r)/"},{"word":"stare","pos":"v.","meaning":"凝视","ipa":"/steə(r)/"}],"note":"star 是“星星”，stare 是“凝视”，差一个 e。"},{"id":"g352","level":"初中","source":"人教/译林","words":[{"word":"taste","pos":"v./n.","meaning":"品尝；味道","ipa":"/teɪst/"},{"word":"test","pos":"n./v.","meaning":"测试","ipa":"/test/"}],"note":"taste 是“品尝”，test 是“测试”，拼写相近。"},{"id":"g353","level":"初中","source":"人教/译林","words":[{"word":"track","pos":"n.","meaning":"轨道；跑道","ipa":"/træk/"},{"word":"trick","pos":"n.","meaning":"把戏；技巧","ipa":"/trɪk/"}],"note":"track 是“轨道”，trick 是“把戏”，元音不同。"},{"id":"g354","level":"初中","source":"人教/译林","words":[{"word":"world","pos":"n.","meaning":"世界","ipa":"/wɜːld/"},{"word":"word","pos":"n.","meaning":"单词","ipa":"/wɜːd/"}],"note":"world 是“世界”，word 是“单词”，差一个 l。"},{"id":"g355","level":"初中","source":"人教/译林","words":[{"word":"worry","pos":"v.","meaning":"担心","ipa":"/ˈwʌri/"},{"word":"hurry","pos":"v.","meaning":"匆忙","ipa":"/ˈhʌri/"}],"note":"worry 是“担心”，hurry 是“匆忙”，首字母不同。"},{"id":"g356","level":"初中","source":"人教/译林","words":[{"word":"shoot","pos":"v.","meaning":"射击；射门","ipa":"/ʃuːt/"},{"word":"shout","pos":"v.","meaning":"喊叫","ipa":"/ʃaʊt/"}],"note":"shoot 是“射击”，shout 是“喊叫”，元音不同。"},{"id":"g357","level":"初中","source":"人教/译林","words":[{"word":"weigh","pos":"v.","meaning":"称重","ipa":"/weɪ/"},{"word":"way","pos":"n.","meaning":"路；方法","ipa":"/weɪ/"}],"note":"weigh 是“称重”，way 是“路/方法”，读音相同。"},{"id":"g358","level":"初中","source":"人教/译林","words":[{"word":"plane","pos":"n.","meaning":"飞机","ipa":"/pleɪn/"},{"word":"plain","pos":"adj.","meaning":"朴素的；清楚的","ipa":"/pleɪn/"}],"note":"plane 是“飞机”，plain 是“朴素的”，读音相同。"},{"id":"g359","level":"高中","source":"其他教材","words":[{"word":"board","pos":"n.","meaning":"木板；登机","ipa":"/bɔːd/"},{"word":"bored","pos":"adj.","meaning":"无聊的","ipa":"/bɔːd/"}],"note":"board 是“木板/登机”，bored 是“无聊的”，读音相同。"},{"id":"g360","level":"高中","source":"其他教材","words":[{"word":"scene","pos":"n.","meaning":"场景","ipa":"/siːn/"},{"word":"seen","pos":"v.","meaning":"see 的过去分词","ipa":"/siːn/"}],"note":"scene 是“场景”，seen 是 see 的过去分词，读音相同。"},{"id":"g361","level":"高中","source":"其他教材","words":[{"word":"through","pos":"prep.","meaning":"通过","ipa":"/θruː/"},{"word":"threw","pos":"v.","meaning":"throw 的过去式","ipa":"/θruː/"}],"note":"through 是介词，threw 是 throw 的过去式，读音相同。"},{"id":"g362","level":"高中","source":"其他教材","words":[{"word":"war","pos":"n.","meaning":"战争","ipa":"/wɔː(r)/"},{"word":"wore","pos":"v.","meaning":"wear 的过去式","ipa":"/wɔː(r)/"}],"note":"war 是“战争”，wore 是 wear 的过去式，读音相同。"},{"id":"g363","level":"高中","source":"其他教材","words":[{"word":"born","pos":"adj.","meaning":"出生的","ipa":"/bɔːn/"},{"word":"borne","pos":"v.","meaning":"bear 的过去分词","ipa":"/bɔːn/"}],"note":"born 是“出生的”，borne 是 bear 的过去分词，读音相同。"},{"id":"g364","level":"高中","source":"其他教材","words":[{"word":"cost","pos":"v.","meaning":"花费","ipa":"/kɒst/"},{"word":"cast","pos":"v.","meaning":"投掷；选派","ipa":"/kɑːst/"}],"note":"cost 是“花费”，cast 是“投掷/选派”，元音不同。"},{"id":"g365","level":"高中","source":"其他教材","words":[{"word":"doubt","pos":"v./n.","meaning":"怀疑","ipa":"/daʊt/"},{"word":"double","pos":"adj.","meaning":"双倍的","ipa":"/ˈdʌbl/"}],"note":"doubt 是“怀疑”，double 是“双倍”，拼写相近。"},{"id":"g366","level":"高中","source":"其他教材","words":[{"word":"sign","pos":"n.","meaning":"标志","ipa":"/saɪn/"},{"word":"sigh","pos":"v.","meaning":"叹气","ipa":"/saɪ/"}],"note":"sign 是“标志”，sigh 是“叹气”，读音不同。"},{"id":"g367","level":"高中","source":"其他教材","words":[{"word":"treat","pos":"v.","meaning":"对待；治疗","ipa":"/triːt/"},{"word":"threat","pos":"n.","meaning":"威胁","ipa":"/θret/"}],"note":"treat 是“对待/治疗”，threat 是“威胁”，拼写相近。"},{"id":"g368","level":"高中","source":"其他教材","words":[{"word":"series","pos":"n.","meaning":"系列","ipa":"/ˈsɪəriːz/"},{"word":"serious","pos":"adj.","meaning":"严肃的","ipa":"/ˈsɪəriəs/"}],"note":"series 是“系列”，serious 是“严肃的”，拼写相近。"},{"id":"g369","level":"高中","source":"其他教材","words":[{"word":"poor","pos":"adj.","meaning":"穷的","ipa":"/pɔː(r)/"},{"word":"pour","pos":"v.","meaning":"倒；倾泻","ipa":"/pɔː(r)/"},{"word":"pore","pos":"n.","meaning":"毛孔","ipa":"/pɔː(r)/"}],"note":"poor 是“穷的”，pour 是“倒”，pore 是“毛孔”，读音相同。"},{"id":"g370","level":"高中","source":"其他教材","words":[{"word":"die","pos":"v.","meaning":"死","ipa":"/daɪ/"},{"word":"dye","pos":"v.","meaning":"染色","ipa":"/daɪ/"}],"note":"die 是“死”，dye 是“染色”，读音相同。"},{"id":"g371","level":"高中","source":"其他教材","words":[{"word":"quite","pos":"adv.","meaning":"相当","ipa":"/kwaɪt/"},{"word":"quote","pos":"v.","meaning":"引用","ipa":"/kwəʊt/"}],"note":"quite 是副词“相当”，quote 是动词“引用”，拼写相近。"},{"id":"g372","level":"四级","source":"四六级词表","words":[{"word":"mail","pos":"n.","meaning":"邮件","ipa":"/meɪl/"},{"word":"male","pos":"adj.","meaning":"男性的","ipa":"/meɪl/"}],"note":"mail 是“邮件”，male 是“男性的”，读音相同。"},{"id":"g373","level":"四级","source":"四六级词表","words":[{"word":"waste","pos":"v./n.","meaning":"浪费","ipa":"/weɪst/"},{"word":"waist","pos":"n.","meaning":"腰","ipa":"/weɪst/"}],"note":"waste 是“浪费”，waist 是“腰”，读音相同。"},{"id":"g374","level":"四级","source":"四六级词表","words":[{"word":"cereal","pos":"n.","meaning":"麦片","ipa":"/ˈsɪəriəl/"},{"word":"serial","pos":"adj./n.","meaning":"连续的；连续剧","ipa":"/ˈsɪəriəl/"}],"note":"cereal 是“麦片”，serial 是“连续剧”，读音相同。"}]
+</script>
+<script>
+(function () {
+  'use strict';
+
+  var LEVELS = ['小学', '初中', '高中', '四级', '六级'];
+  var LS_KEY = 'yhbank_v1';
+  var builtin = JSON.parse(document.getElementById('wordbank-data').textContent);
+  var bank = loadBank();
+  var levelFilter = '全部';
+  var browseMode = 'letter';
+  var editingId = null;
+
+  var $ = function (id) { return document.getElementById(id); };
+  var searchInput = $('search-input');
+  var suggestionsEl = $('suggestions');
+  var searchResults = $('search-results');
+  var browseList = $('browse-list');
+  var adminList = $('admin-list');
+
+  function loadBank() {
+    try {
+      var raw = localStorage.getItem(LS_KEY);
+      if (raw) {
+        var parsed = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed.length) return parsed;
+      }
+    } catch (e) {}
+    return builtin.slice();
+  }
+
+  function saveBank() {
+    try { localStorage.setItem(LS_KEY, JSON.stringify(bank)); } catch (e) {}
+  }
+
+  function esc(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  function normWord(s) {
+    return String(s).toLowerCase().replace(/[^a-z0-9'\u2019\-\s]/g, '').trim().replace(/\s+/g, ' ');
+  }
+
+  function levelIdx(level) {
+    return Math.max(0, LEVELS.indexOf(level));
+  }
+
+  function badgeHtml(group, compact) {
+    return '<span class="badge b-level lv' + levelIdx(group.level) + '">' + esc(group.level) + '</span>' +
+           '<span class="badge b-source">' + esc(group.source) + '</span>';
+  }
+
+  function wordsSummary(group) {
+    return group.words.map(function (w) { return esc(w.word); }).join(' / ');
+  }
+
+  function wordListHtml(group, query) {
+    var q = normWord(query || '');
+    var rows = group.words.map(function (w) {
+      var en = esc(w.word);
+      if (q && normWord(w.word).indexOf(q) !== -1) {
+        en = esc(w.word).replace(new RegExp('(' + escReg(q) + ')', 'ig'), '<mark>$1</mark>');
+      }
+      var ipa = w.ipa ? '<span class="word-ipa">' + esc(w.ipa) + '</span>' : '';
+      var pos = w.pos ? '<span class="word-pos">' + esc(w.pos) + '</span>' : '';
+      return '<div class="word-row"><span class="word-en" data-word="' + esc(w.word) + '">' + en + ipa + pos + '</span>' +
+             '<span class="word-mean">' + esc(w.meaning) + '</span></div>';
+    }).join('');
+    return '<div class="word-list">' + rows + '</div>';
+  }
+
+  function escReg(s) {
+    return String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  }
+
+  function groupCard(group, query, compact) {
+    var cls = compact ? 'group compact' : 'group';
+    return '<article class="' + cls + '" data-id="' + esc(group.id) + '">' +
+      '<div class="group-top">' +
+        '<h3 class="group-words">' + wordsSummary(group) + '</h3>' +
+        badgeHtml(group) +
+      '</div>' +
+      wordListHtml(group, query) +
+      '<div class="note"><b>辨析：</b>' + esc(group.note) + '</div>' +
+    '</article>';
+  }
+
+  function levenshtein(a, b) {
+    if (a === b) return 0;
+    var la = a.length, lb = b.length;
+    if (!la) return lb;
+    if (!lb) return la;
+    var prev = new Array(lb + 1), cur = new Array(lb + 1);
+    for (var j = 0; j <= lb; j++) prev[j] = j;
+    for (var i = 1; i <= la; i++) {
+      cur[0] = i;
+      for (var j = 1; j <= lb; j++) {
+        var cost = a[i - 1] === b[j - 1] ? 0 : 1;
+        cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + cost);
+      }
+      var t = prev; prev = cur; cur = t;
+    }
+    return prev[lb];
+  }
+
+  function matchGroup(group, q) {
+    var bestTier = Infinity;
+    var bestScore = Infinity;
+    var matched = '';
+    group.words.forEach(function (w) {
+      var wl = normWord(w.word);
+      if (!wl) return;
+      var tier, score;
+      if (wl === q) { tier = 0; score = 0; }
+      else if (wl.indexOf(q) === 0 || (q.indexOf(wl) === 0 && wl.length >= 4)) { tier = 1; score = 1; }
+      else if (wl.indexOf(q) !== -1 && (q.length >= 4 || wl.length - q.length <= 2)) { tier = 2; score = 2; }
+      else {
+        var d = levenshtein(wl, q);
+        var maxD = q.length >= 5 ? 2 : 1;
+        if (d > maxD) return;
+        if (q.length <= 4 && (wl.length !== q.length || wl.charAt(0) !== q.charAt(0))) return;
+        tier = 3;
+        score = 3 + d;
+      }
+      if (tier < bestTier || (tier === bestTier && score < bestScore)) {
+        bestTier = tier;
+        bestScore = score;
+        matched = wl;
+      }
+    });
+    if (bestTier === Infinity) return null;
+    return { tier: bestTier, score: bestScore, matched: matched };
+  }
+
+  function filteredBank() {
+    if (levelFilter === '全部') return bank;
+    return bank.filter(function (g) { return g.level === levelFilter; });
+  }
+
+  function runSearch() {
+    var q = normWord(searchInput.value);
+    if (!q) {
+      renderSearchEmpty();
+      return;
+    }
+    var exact = [];
+    var fuzzy = [];
+    filteredBank().forEach(function (g) {
+      var r = matchGroup(g, q);
+      if (!r) return;
+      var item = { g: g, tier: r.tier, score: r.score };
+      (r.tier <= 2 ? exact : fuzzy).push(item);
+    });
+    function sortHits(a, b) {
+      if (a.tier !== b.tier) return a.tier - b.tier;
+      if (a.score !== b.score) return a.score - b.score;
+      var la = a.g.level === levelFilter ? 0 : 1;
+      var lb = b.g.level === levelFilter ? 0 : 1;
+      if (la !== lb) return la - lb;
+      return a.g.id.localeCompare(b.g.id);
+    }
+    exact.sort(sortHits);
+    fuzzy.sort(sortHits);
+    var html = '';
+    if (exact.length || fuzzy.length) {
+      html += '<div class="result-head"><span>直接命中 ' + exact.length + ' 组' +
+        (fuzzy.length ? ' · 相近拼写 ' + fuzzy.length + ' 组' : '') + '</span>' +
+        (levelFilter !== '全部' ? '<span>当前难度：' + esc(levelFilter) + '</span>' : '') + '</div>';
+    }
+    if (!exact.length && !fuzzy.length) {
+      html += '<div class="empty">未找到相关词条，可尝试相近拼写或切换难度。</div>';
+    } else {
+      exact.slice(0, 40).forEach(function (h) { html += groupCard(h.g, q, false); });
+      if (fuzzy.length) {
+        html += '<div class="fuzzy-head">相近拼写（近似匹配，供参考）</div>';
+        fuzzy.slice(0, 8).forEach(function (h) { html += groupCard(h.g, q, true); });
+      }
+    }
+    searchResults.innerHTML = html;
+  }
+
+  function renderSearchEmpty() {
+    var pool = filteredBank();
+    searchResults.innerHTML =
+      '<div class="result-head"><span>共 ' + pool.length + ' 组词条</span></div>' +
+      '<div class="empty">输入单词后，会匹配与之相关的易混词条。</div>';
+  }
+
+  function renderSuggestions() {
+    var q = normWord(searchInput.value);
+    if (!q) { suggestionsEl.hidden = true; return; }
+    var seen = {};
+    var items = [];
+    filteredBank().forEach(function (g) {
+      g.words.forEach(function (w) {
+        var wl = normWord(w.word);
+        if (!wl || seen[wl]) return;
+        var score = wl.indexOf(q) === 0 ? 0 :
+          (wl.indexOf(q) !== -1 && (q.length >= 4 || wl.length - q.length <= 2) ? 1 : 2);
+        if (score > 1) return;
+        seen[wl] = true;
+        items.push({ w: w, wl: wl, level: g.level, score: score });
+      });
+    });
+    items.sort(function (a, b) {
+      if (a.score !== b.score) return a.score - b.score;
+      return a.wl.length - b.wl.length;
+    });
+    items = items.slice(0, 8);
+    if (!items.length) { suggestionsEl.hidden = true; return; }
+    suggestionsEl.innerHTML = items.map(function (it) {
+      return '<li data-word="' + esc(it.w.word) + '">' +
+        '<span class="sug-word">' + esc(it.w.word) + '</span>' +
+        '<span class="sug-ipa">' + (it.w.ipa ? esc(it.w.ipa) : '') + '</span>' +
+        '<span class="sug-mean">' + esc(it.w.meaning) + '</span>' +
+        '<span class="badge b-level lv' + levelIdx(it.level) + '">' + esc(it.level) + '</span>' +
+      '</li>';
+    }).join('');
+    suggestionsEl.hidden = false;
+  }
+
+  function renderBrowse() {
+    var pool = filteredBank();
+    var html = '<div class="result-head"><span>共 ' + pool.length + ' 组词条</span></div>';
+    if (!pool.length) {
+      html += '<div class="empty">当前难度下暂无词条。</div>';
+      browseList.innerHTML = html;
+      return;
+    }
+    var groups = {};
+    if (browseMode === 'level') {
+      LEVELS.forEach(function (lv) { groups[lv] = []; });
+      pool.forEach(function (g) { groups[g.level].push(g); });
+      Object.keys(groups).forEach(function (key) {
+        var list = groups[key];
+        if (!list.length) return;
+        html += '<div class="browse-head"><span class="bh-title">' + esc(key) + '</span>' +
+          '<span class="bh-count">' + list.length + ' 组</span></div>';
+        list.forEach(function (g) { html += groupCard(g, '', true); });
+      });
+    } else {
+      pool.forEach(function (g) {
+        var first = normWord(g.words[0].word).charAt(0);
+        var key = /[a-z]/.test(first) ? first.toUpperCase() : '#';
+        (groups[key] = groups[key] || []).push(g);
+      });
+      Object.keys(groups).sort().forEach(function (key) {
+        html += '<div class="browse-head"><span class="bh-title">' + esc(key) + '</span>' +
+          '<span class="bh-count">' + groups[key].length + ' 组</span></div>';
+        groups[key].forEach(function (g) { html += groupCard(g, '', true); });
+      });
+    }
+    browseList.innerHTML = html;
+  }
+
+  function renderStats() {
+    var words = {};
+    bank.forEach(function (g) {
+      g.words.forEach(function (w) { words[normWord(w.word)] = true; });
+    });
+    $('stat-groups').innerHTML = '词条 <b>' + bank.length + '</b> 组 · 单词 <b>' +
+      Object.keys(words).length + '</b> 个';
+  }
+
+  function renderLevelFilters() {
+    var opts = ['全部'].concat(LEVELS);
+    ['level-filter-search', 'level-filter-browse'].forEach(function (id) {
+      var el = $(id);
+      el.innerHTML = opts.map(function (lv) {
+        return '<button class="seg-btn' + (lv === levelFilter ? ' active' : '') + '" data-level="' + lv + '">' + lv + '</button>';
+      }).join('');
+    });
+  }
+
+  function switchTab(tab) {
+    document.querySelectorAll('.tab').forEach(function (b) {
+      b.classList.toggle('active', b.getAttribute('data-tab') === tab);
+    });
+    document.querySelectorAll('.tabpanel').forEach(function (p) {
+      p.hidden = p.getAttribute('data-panel') !== tab;
+    });
+    if (tab === 'search') runSearch();
+    if (tab === 'browse') renderBrowse();
+    if (tab === 'admin') renderAdmin();
+  }
+
+  function message(text, type) {
+    var el = $('admin-message');
+    el.innerHTML = '<div class="message ' + (type === 'err' ? 'err' : 'ok') + '">' + esc(text) + '</div>';
+    setTimeout(function () { el.innerHTML = ''; }, 4000);
+  }
+
+  function validateGroup(g, isNew) {
+    if (!g || typeof g !== 'object') return '词条格式错误';
+    if (!g.id) return '缺少编号';
+    if (LEVELS.indexOf(g.level) === -1) return '难度不合法：' + g.level;
+    if (!g.words || !Array.isArray(g.words) || g.words.length < 2) return '每组至少需要两个单词';
+    if (!g.note || !String(g.note).trim()) return '缺少辨析要点';
+    var seen = {};
+    for (var i = 0; i < g.words.length; i++) {
+      var w = g.words[i];
+      if (!w || !w.word || !String(w.word).trim()) return '存在空单词';
+      if (!w.meaning || !String(w.meaning).trim()) return '单词 ' + w.word + ' 缺少释义';
+      var k = normWord(w.word);
+      if (!k) return '单词 ' + w.word + ' 不合法';
+      if (seen[k]) return '同组内单词重复：' + w.word;
+      seen[k] = true;
+    }
+    if (isNew) {
+      for (var j = 0; j < bank.length; j++) {
+        if (bank[j].id === g.id) return '编号已存在：' + g.id;
+      }
+    }
+    return null;
+  }
+
+  function nextId() {
+    var max = 0;
+    bank.forEach(function (g) {
+      var m = String(g.id).match(/^g(\d+)$/);
+      if (m) max = Math.max(max, parseInt(m[1], 10));
+    });
+    return 'g' + String(max + 1).padStart(3, '0');
+  }
+
+  function parseWordsText(text) {
+    var lines = String(text).split(/\r?\n/);
+    var words = [];
+    for (var i = 0; i < lines.length; i++) {
+      var line = lines[i].trim();
+      if (!line) continue;
+      var parts = line.split('|').map(function (s) { return s.trim(); });
+      if (parts.length < 2) return { error: '第 ' + (i + 1) + ' 行格式错误（应为 单词|释义）' };
+      if (!parts[0]) return { error: '第 ' + (i + 1) + ' 行缺少单词' };
+      var item = { word: parts[0], pos: '', ipa: '', meaning: '' };
+      if (parts.length >= 4) {
+        item.pos = parts[1];
+        item.ipa = parts[2];
+        item.meaning = parts[3];
+      } else if (parts.length === 3) {
+        item.pos = parts[1];
+        item.meaning = parts[2];
+      } else {
+        item.meaning = parts[1];
+      }
+      if (!item.meaning) return { error: '第 ' + (i + 1) + ' 行缺少释义' };
+      words.push(item);
+    }
+    if (words.length < 2) return { error: '至少需要两个单词' };
+    return { words: words };
+  }
+
+  function wordsToText(group) {
+    return group.words.map(function (w) {
+      return w.word + '|' + (w.pos || '') + '|' + (w.ipa || '') + '|' + w.meaning;
+    }).join('\n');
+  }
+
+  function renderAdmin() {
+    var html = '<div class="result-head"><span>共 ' + bank.length + ' 组词条</span></div>';
+    bank.forEach(function (g) {
+      html += '<div class="admin-row" data-id="' + esc(g.id) + '">' +
+        '<div class="group-top"><span class="admin-id">' + esc(g.id) + '</span>' +
+        badgeHtml(g) + '</div>' +
+        '<div class="word-row"><span class="word-en">' + wordsSummary(g) + '</span><span class="word-mean"></span></div>' +
+        '<div class="note"><b>辨析：</b>' + esc(g.note) + '</div>' +
+        '<div class="admin-actions">' +
+          '<button class="btn small" data-act="edit">编辑</button>' +
+          '<button class="btn small danger" data-act="del">删除</button>' +
+        '</div>' +
+      '</div>';
+    });
+    adminList.innerHTML = html;
+  }
+
+  function openForm(group) {
+    editingId = group ? group.id : null;
+    $('admin-form').hidden = false;
+    $('f-level').value = group ? group.level : '小学';
+    $('f-source').value = group ? group.source : '人教/译林';
+    $('f-id').value = group ? group.id : nextId();
+    $('f-words').value = group ? wordsToText(group) : '';
+    $('f-note').value = group ? group.note : '';
+    $('f-hint').textContent = group ? '正在编辑：' + group.id : '新增词条';
+  }
+
+  function closeForm() {
+    $('admin-form').hidden = true;
+    editingId = null;
+  }
+
+  function saveForm() {
+    var parsed = parseWordsText($('f-words').value);
+    if (parsed.error) { message(parsed.error, 'err'); return; }
+    var group = {
+      id: $('f-id').value.trim() || nextId(),
+      level: $('f-level').value,
+      source: $('f-source').value,
+      words: parsed.words,
+      note: $('f-note').value.trim()
+    };
+    var err = validateGroup(group, !editingId);
+    if (err) { message(err, 'err'); return; }
+    if (editingId) {
+      for (var i = 0; i < bank.length; i++) {
+        if (bank[i].id === editingId) { bank[i] = group; break; }
+      }
+    } else {
+      bank.push(group);
+    }
+    saveBank();
+    closeForm();
+    renderAdmin();
+    renderStats();
+    message('已保存', 'ok');
+  }
+
+  function exportBank() {
+    var blob = new Blob([JSON.stringify(bank, null, 2)], { type: 'application/json' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = '易混词汇词库.json';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 100);
+  }
+
+  function validateImport(data) {
+    if (!Array.isArray(data) || !data.length) return 'JSON 内容不是有效的词条数组';
+    var ids = {};
+    for (var i = 0; i < data.length; i++) {
+      var err = validateGroup(data[i], false);
+      if (err) return '第 ' + (i + 1) + ' 条：' + err;
+      if (ids[data[i].id]) return '编号重复：' + data[i].id;
+      ids[data[i].id] = true;
+    }
+    return null;
+  }
+
+  function doImport(text) {
+    var data;
+    try { data = JSON.parse(text); } catch (e) { message('JSON 解析失败', 'err'); return; }
+    var err = validateImport(data);
+    if (err) { message('导入失败：' + err, 'err'); return; }
+    if (!window.confirm('导入将替换当前全部 ' + bank.length + ' 组词条，是否继续？')) return;
+    bank = data;
+    saveBank();
+    $('admin-import').hidden = true;
+    $('import-text').value = '';
+    renderAdmin();
+    renderStats();
+    renderLevelFilters();
+    message('导入成功，共 ' + bank.length + ' 组', 'ok');
+  }
+
+  function resetBank() {
+    if (!window.confirm('恢复内置词库将清除全部本地修改，是否继续？')) return;
+    try { localStorage.removeItem(LS_KEY); } catch (e) {}
+    bank = builtin.slice();
+    renderAdmin();
+    renderStats();
+    renderLevelFilters();
+    message('已恢复内置词库', 'ok');
+  }
+
+  document.querySelectorAll('.tab').forEach(function (b) {
+    b.addEventListener('click', function () { switchTab(b.getAttribute('data-tab')); });
+  });
+
+  searchInput.addEventListener('input', function () {
+    $('search-clear').hidden = searchInput.value === '';
+    renderSuggestions();
+    runSearch();
+  });
+  searchInput.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') {
+      suggestionsEl.hidden = true;
+      runSearch();
+    }
+    if (e.key === 'Escape') { suggestionsEl.hidden = true; }
+  });
+  $('search-clear').addEventListener('click', function () {
+    searchInput.value = '';
+    $('search-clear').hidden = true;
+    suggestionsEl.hidden = true;
+    renderSearchEmpty();
+  });
+
+  suggestionsEl.addEventListener('click', function (e) {
+    var li = e.target.closest('li');
+    if (!li) return;
+    searchInput.value = li.getAttribute('data-word');
+    suggestionsEl.hidden = true;
+    $('search-clear').hidden = false;
+    runSearch();
+  });
+  document.addEventListener('click', function (e) {
+    if (!e.target.closest('.searchbox')) suggestionsEl.hidden = true;
+  });
+
+  $('search-chips').addEventListener('click', function (e) {
+    var chip = e.target.closest('[data-sample]');
+    if (!chip) return;
+    searchInput.value = chip.getAttribute('data-sample');
+    $('search-clear').hidden = false;
+    runSearch();
+  });
+
+  document.addEventListener('click', function (e) {
+    var el = e.target.closest('.word-en[data-word]');
+    if (!el || !el.closest('.group.compact')) return;
+    searchInput.value = el.getAttribute('data-word');
+    $('search-clear').hidden = false;
+    switchTab('search');
+    runSearch();
+  });
+
+  document.addEventListener('click', function (e) {
+    var btn = e.target.closest('#level-filter-search .seg-btn, #level-filter-browse .seg-btn');
+    if (!btn) return;
+    levelFilter = btn.getAttribute('data-level');
+    renderLevelFilters();
+    renderSuggestions();
+    runSearch();
+    renderBrowse();
+  });
+
+  document.addEventListener('click', function (e) {
+    var btn = e.target.closest('#browse-mode .seg-btn');
+    if (!btn) return;
+    browseMode = btn.getAttribute('data-mode');
+    document.querySelectorAll('#browse-mode .seg-btn').forEach(function (b) {
+      b.classList.toggle('active', b === btn);
+    });
+    renderBrowse();
+  });
+
+  $('btn-add').addEventListener('click', function () {
+    $('admin-import').hidden = true;
+    openForm(null);
+    $('f-words').focus();
+  });
+  $('btn-cancel').addEventListener('click', closeForm);
+  $('btn-save').addEventListener('click', saveForm);
+  $('btn-export').addEventListener('click', exportBank);
+  $('btn-import').addEventListener('click', function () {
+    closeForm();
+    $('admin-import').hidden = !$('admin-import').hidden;
+  });
+  $('btn-import-confirm').addEventListener('click', function () {
+    doImport($('import-text').value);
+  });
+  $('btn-import-cancel').addEventListener('click', function () {
+    $('admin-import').hidden = true;
+  });
+  $('btn-reset').addEventListener('click', resetBank);
+  $('import-file').addEventListener('change', function (e) {
+    var file = e.target.files && e.target.files[0];
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function () { doImport(String(reader.result)); };
+    reader.readAsText(file, 'utf-8');
+    this.value = '';
+  });
+
+  adminList.addEventListener('click', function (e) {
+    var btn = e.target.closest('[data-act]');
+    if (!btn) return;
+    var id = btn.closest('.admin-row').getAttribute('data-id');
+    if (btn.getAttribute('data-act') === 'edit') {
+      var g = bank.filter(function (x) { return x.id === id; })[0];
+      if (g) { $('admin-import').hidden = true; openForm(g); }
+    } else if (btn.getAttribute('data-act') === 'del') {
+      if (!window.confirm('删除词条 ' + id + '？')) return;
+      bank = bank.filter(function (x) { return x.id !== id; });
+      saveBank();
+      renderAdmin();
+      renderStats();
+      message('已删除', 'ok');
+    }
+  });
+
+  renderLevelFilters();
+  renderStats();
+  renderSearchEmpty();
+  renderBrowse();
+})();
+</script>
+</body>
+</html>
