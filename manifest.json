@@ -1,0 +1,25 @@
+{
+  "name": "LEXI 易混词辨析",
+  "short_name": "LEXI",
+  "description": "英语易混词辨析与智能记忆系统：拼写/发音/词义对比、辨析训练、间隔重复复习",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#0f766e",
+  "background_color": "#f2f5f7",
+  "icons": [
+    {
+      "src": "./icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "./icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
