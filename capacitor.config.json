@@ -1,0 +1,8 @@
+{
+  "appId": "com.zeng.lexi",
+  "appName": "LEXI",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "https"
+  }
+}

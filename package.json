@@ -1,0 +1,14 @@
+{
+  "name": "lexi-mobile",
+  "private": true,
+  "version": "2.0.0",
+  "description": "LEXI Android shell",
+  "dependencies": {
+    "@capacitor/android": "^8.6.2",
+    "@capacitor/cli": "^8.6.2",
+    "@capacitor/core": "^8.6.2"
+  },
+  "devDependencies": {
+    "@capacitor/assets": "^4.0.0"
+  }
+}
