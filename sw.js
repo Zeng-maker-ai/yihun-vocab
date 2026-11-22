@@ -1,5 +1,5 @@
-// LEXI Service Worker —— 离线缓存（版本 v202611221223）
-var CACHE = 'lexi-v202611221223';
+// LEXI Service Worker —— 离线缓存（版本 v202611222039）
+var CACHE = 'lexi-v202611222039';
 var PRECACHE = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png'];
 self.addEventListener('install', function (e) {
   e.waitUntil(caches.open(CACHE).then(function (c) { return c.addAll(PRECACHE); }).then(function () { return self.skipWaiting(); }));
